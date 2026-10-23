@@ -83,23 +83,54 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
+    /* Animasi Pop-up Modal */
+    .modal-fade-in {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal-slide-up {
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
   </style>
 </head>
 
-<!-- PERBAIKAN SCROLL: overflow-hidden & flex h-screen HANYA berlaku di Laptop (md:) -->
-
 <body class="font-sans text-slate-900 antialiased md:flex md:h-screen md:overflow-hidden">
 
-  <!-- Navigasi: Di HP fixed bawah & menyamping (flex-row), di Laptop di kiri & menurun (flex-col) -->
+  <!-- Navigasi -->
   <nav id="bottom-nav"
     class="fixed bottom-0 left-0 w-full md:static md:w-72 md:h-full bg-white border-t border-slate-200 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-sm z-40 shrink-0 transition-all">
   </nav>
 
-  <!-- Container Utama Konten: pb-28 di HP agar bisa di-scroll sampai bawah menu -->
+  <!-- Container Utama Konten -->
   <div id="app" class="w-full pb-28 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
     <main id="view" class="h-full"></main>
   </div>
 
+  <!-- Tempat untuk Modal Detail -->
+  <div id="modal-root"></div>
   <div id="toast-root"></div>
 
   <script>
@@ -113,7 +144,7 @@
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
-    // 2. STATE & DATA (Diperbarui agar mengingat halaman terakhir)
+    // 2. STATE & DATA
     // ==========================================
     let DB = { residents: [] };
     const savedView = localStorage.getItem('rt_last_view') || 'landing';
@@ -140,10 +171,84 @@
 
     function toast(msg, isError = false) {
       const el = document.createElement('div');
-      el.className = `fixed top-10 md:top-6 left-1/2 md:left-auto md:right-6 -translate-x-1/2 md:translate-x-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-900'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
+      el.className = `fixed top-10 md:top-6 left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-900'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
       el.textContent = msg;
       $('#toast-root').appendChild(el);
       setTimeout(() => el.remove(), 4000);
+    }
+
+    function closeDetail() {
+      $('#modal-root').innerHTML = '';
+    }
+
+    function openDetail(id) {
+      const r = DB.residents.find(x => x.id == id);
+      if (!r) return;
+
+      const moodUI = {
+        'sad': { emoji: '😢', label: 'Sedih', color: '#b91c1c', soft: '#fee2e2' },
+        'neutral': { emoji: '🙂', label: 'Biasa saja', color: '#a16207', soft: '#fef3c7' },
+        'happy': { emoji: '😊', label: 'Senang', color: '#047857', soft: '#d1fae5' }
+      };
+
+      const m = moodUI[r.mood];
+      const isFilled = r.filled && m;
+
+      $('#modal-root').innerHTML = `
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm modal-fade-in" onclick="closeDetail()"></div>
+          
+          <!-- Modal Card -->
+          <div class="relative bg-white rounded-3xl w-full max-w-md shadow-2xl modal-slide-up overflow-hidden">
+            <!-- Header Modal -->
+            <div class="bg-slate-50 border-b border-slate-100 p-5 flex items-center justify-between">
+              <h3 class="font-bold text-xl text-slate-800">Detail Lansia</h3>
+              <button onclick="closeDetail()" class="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">${icon('x', 'w-6 h-6')}</button>
+            </div>
+            
+            <!-- Body Modal -->
+            <div class="p-6 space-y-6">
+              <div class="flex items-center gap-4">
+                ${avatar(r.name)}
+                <div>
+                  <p class="text-2xl font-bold text-slate-800">${r.name}</p>
+                  <p class="text-slate-500 font-medium">${r.room || 'Kamar Tidak Diketahui'}</p>
+                </div>
+              </div>
+
+              <div class="border-t border-slate-100 pt-5">
+                <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Status Hari Ini</p>
+                
+                ${isFilled ? `
+                  <div class="rounded-2xl p-4 flex items-center gap-4 mb-4" style="background:${m.soft}">
+                    <span class="text-4xl drop-shadow-sm">${m.emoji}</span>
+                    <div>
+                      <p class="font-bold text-lg" style="color:${m.color}">${m.label}</p>
+                      <p class="text-sm opacity-80" style="color:${m.color}">Diperbarui pukul ${r.time}</p>
+                    </div>
+                  </div>
+                  
+                  ${r.needs && r.needs.length > 0 ? `
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Yang Dibutuhkan:</p>
+                    <ul class="space-y-2">
+                      ${r.needs.map(n => `<li class="flex items-center gap-2 text-slate-700 font-medium"><div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div>${n}</li>`).join('')}
+                    </ul>
+                  ` : `
+                    <p class="text-slate-500 italic">Tidak ada kebutuhan khusus yang diminta hari ini.</p>
+                  `}
+                ` : `
+                  <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-center">
+                    <span class="text-3xl mb-2 block">⏳</span>
+                    <p class="text-slate-500 font-medium">Lansia ini belum mengisi form atau belum dipantau hari ini.</p>
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
     }
 
     // ==========================================
@@ -153,15 +258,18 @@
       try {
         const { data, error } = await supabaseClient.from('residents').select('*').order('id', { ascending: true });
 
-        // Peringatan jika Supabase terkunci RLS
         if (error) {
           toast("Database Terkunci! Matikan fitur RLS di menu SQL Supabase Anda.", true);
           throw error;
         }
 
         if (data) {
+          const isChanged = JSON.stringify(DB.residents) !== JSON.stringify(data);
           DB.residents = data;
-          if (S.view !== 'landing') render();
+
+          if (isChanged && S.view !== 'landing') {
+            render();
+          }
         }
       } catch (err) {
         console.error("Gagal memuat data:", err);
@@ -174,11 +282,20 @@
       const moodName = S.mood === 1 ? 'sad' : S.mood === 2 ? 'neutral' : 'happy';
 
       const r = DB.residents.find(x => x.id == S.rid);
+
+      // LOGIKA BERGULIR 7 HARI (Rolling First-In First-Out)
       let updatedHistory = Array.isArray(r.history) && r.history.length === 7
         ? [...r.history]
-        : ['happy', 'happy', 'neutral', 'sad', 'neutral', 'happy', null];
+        : ['happy', 'neutral', 'happy', 'happy', 'neutral', 'happy', 'happy'];
 
-      updatedHistory[6] = moodName;
+      if (!r.filled) {
+        // Jika form baru diisi hari ini: Geser semua data ke kiri (buang yang paling lama)
+        updatedHistory.shift();
+        updatedHistory.push(moodName);
+      } else {
+        // Jika sekadar ganti pilihan di hari yang sama: Timpa data paling ujung kanan
+        updatedHistory[6] = moodName;
+      }
 
       await supabaseClient.from('residents').update({
         filled: true,
@@ -190,6 +307,7 @@
 
       S.step = 3;
       render();
+      window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
       loadData();
     }
 
@@ -198,7 +316,8 @@
       const room = $('#a-room').value.trim();
       if (!name) return toast('Mohon isi nama dulu');
 
-      const defaultHistory = ['happy', 'neutral', 'happy', 'happy', 'neutral', 'happy', null];
+      // Menggunakan data utuh tanpa slot kosong agar animasi geser 7 hari mulus
+      const defaultHistory = ['happy', 'neutral', 'happy', 'happy', 'neutral', 'happy', 'happy'];
 
       const { error } = await supabaseClient.from('residents').insert([{
         name,
@@ -249,7 +368,11 @@
     </div>
 
     <section>
-      <h2 class="text-xl font-bold text-slate-800 mb-4">Daftar Lansia</h2>
+      <div class="mb-5">
+        <h2 class="text-xl font-bold text-slate-800">Daftar Lansia</h2>
+        <p class="text-sm text-brand-700 font-medium mt-1 bg-brand-50 inline-block px-3 py-1 rounded-lg">👉 Klik nama lansia di bawah ini untuk mengisi / memantau</p>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${DB.residents.map(r => `
         <button data-a="start" data-id="${r.id}" class="btn w-full text-left bg-white rounded-2xl border-2 ${r.filled ? 'border-emerald-400 shadow-emerald-50' : 'border-slate-200 hover:border-brand-400'} p-4 flex items-center gap-4 hover:shadow-md transition-all">
@@ -363,7 +486,10 @@
     </section>
 
     <section class="pb-8">
-      <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-5 flex items-center gap-2">📅 Riwayat 7 Hari Terakhir</h2>
+      <div class="mb-5">
+        <h2 class="text-xl md:text-2xl font-bold text-slate-800 flex items-center gap-2">📅 Riwayat 7 Hari Terakhir</h2>
+        <p class="text-sm text-slate-500 mt-1">Klik kotak nama lansia untuk melihat detail hari ini.</p>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         ${DB.residents.map(r => {
             const hist = Array.isArray(r.history) && r.history.length === 7
@@ -371,8 +497,11 @@
               : ['happy', 'happy', 'neutral', 'sad', 'neutral', 'happy', r.mood || null];
 
             return `
-          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <p class="text-xl font-bold text-slate-800 mb-5 truncate">${r.name}</p>
+          <button onclick="openDetail(${r.id})" class="text-left w-full bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 transition-all focus:outline-none">
+            <div class="flex justify-between items-center mb-5">
+              <p class="text-xl font-bold text-slate-800 truncate pr-2">${r.name}</p>
+              ${icon('zoom-in', 'w-5 h-5 text-slate-300')}
+            </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
               const m = moodUI[moodStr];
@@ -386,7 +515,7 @@
                 </div>`;
             }).join('')}
             </div>
-          </div>`;
+          </button>`;
           }).join('')}
       </div>
     </section>
@@ -467,22 +596,27 @@
       switch (a) {
         case 'nav':
           S.view = v;
-          localStorage.setItem('rt_last_view', v); // Menyimpan halaman terakhir
-          loadData(); render(); window.scrollTo(0, 0);
+          localStorage.setItem('rt_last_view', v);
+          render();
+          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
+          loadData();
           break;
         case 'start':
           S.view = 'checkin';
-          localStorage.setItem('rt_last_view', 'checkin'); // Menyimpan saat mulai form
+          localStorage.setItem('rt_last_view', 'checkin');
           S.step = 1; S.rid = id; S.mood = null; S.needs = [];
-          render(); window.scrollTo(0, 0);
+          render();
+          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
           break;
         case 'back':
           S.step = 1;
-          render(); window.scrollTo(0, 0);
+          render();
+          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
           break;
         case 'mood':
           S.mood = +v; S.step = 2;
-          render(); window.scrollTo(0, 0);
+          render();
+          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
           break;
         case 'need':
           S.needs.includes(id) ? S.needs = S.needs.filter(x => x !== id) : S.needs.push(id);
@@ -502,4 +636,4 @@
   </script>
 </body>
 
-</html>
+</html>git add .
