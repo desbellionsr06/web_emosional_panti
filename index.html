@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#6D28D9" />
+  <!-- Mengubah warna tema status bar HP agar sesuai dengan Blue Gray -->
+  <meta name="theme-color" content="#4e7ba6" />
   <title>RuangTerhubung — Check-in Perasaan Lansia</title>
 
   <!-- Deteksi Error Anti-Blank Putih -->
@@ -28,11 +29,25 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
+    // PERBAIKAN WARNA TEMA: Menyesuaikan dengan palet Light Blue & Blue Gray
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: { sans: ['"Atkinson Hyperlegible"', 'sans-serif'] },
-          colors: { brand: { 50: '#f5f3ff', 100: '#ede9fe', 700: '#6D28D9', 800: '#5b21b6' } }
+          colors: {
+            brand: {
+              50: '#f0f8ff',   // Latar belakang sangat terang
+              100: '#dcebf5',  // Aksen terang
+              200: '#a3d1e6',  // Light Blue (Sesuai Gambar)
+              300: '#8ebfda',
+              400: '#7aaed0',
+              500: '#6998c5',  // Blue Gray (Sesuai Gambar)
+              600: '#5c8ab5',
+              700: '#4e7ba6',  // Blue Gray Utama untuk tombol dan teks agar kontras
+              800: '#3f678e',  // Warna saat tombol ditekan / hover
+              900: '#325475'   // Border warna gelap
+            }
+          }
         }
       }
     };
@@ -119,7 +134,7 @@
 
 <body class="font-sans text-slate-900 antialiased md:flex md:h-screen md:overflow-hidden">
 
-  <!-- Navigasi -->
+  <!-- Navigasi: Di HP fixed bawah & menyamping, di Laptop di kiri & menurun -->
   <nav id="bottom-nav"
     class="fixed bottom-0 left-0 w-full md:static md:w-72 md:h-full bg-white border-t border-slate-200 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-sm z-40 shrink-0 transition-all">
   </nav>
@@ -144,7 +159,7 @@
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
-    // 2. STATE & DATA
+    // 2. STATE & DATA (Mengingat halaman terakhir)
     // ==========================================
     let DB = { residents: [] };
     const savedView = localStorage.getItem('rt_last_view') || 'landing';
@@ -169,6 +184,7 @@
     const icon = (name, cls = 'w-7 h-7') => `<i data-lucide="${name}" class="${cls}"></i>`;
     const avatar = (name) => `<div class="w-14 h-14 shrink-0 rounded-full bg-brand-700 text-white text-2xl font-bold flex items-center justify-center">${name ? name[0].toUpperCase() : '?'}</div>`;
 
+    // PERBAIKAN POP-UP TOAST AGAR SELALU PAS DI HP
     function toast(msg, isError = false) {
       const el = document.createElement('div');
       el.className = `fixed top-10 md:top-6 left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-900'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
@@ -265,6 +281,8 @@
         }
 
         if (data) {
+          // Hanya render ulang halaman jika ada perubahan data sungguhan di database.
+          // Ini yang menghilangkan sensasi lag/crash/berkedip saat pindah halaman.
           const isChanged = JSON.stringify(DB.residents) !== JSON.stringify(data);
           DB.residents = data;
 
