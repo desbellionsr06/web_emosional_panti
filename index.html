@@ -162,10 +162,11 @@
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
-    // 2. STATE & DATA (Mengingat halaman terakhir)
+    // 2. STATE & DATA (Menggunakan sessionStorage)
     // ==========================================
     let DB = { residents: [] };
-    const savedView = localStorage.getItem('rt_last_view') || 'landing';
+    // PERBAIKAN: Menggunakan sessionStorage agar jika tab ditutup, kembali ke landing
+    const savedView = sessionStorage.getItem('rt_last_view') || 'landing';
     const S = { view: savedView, step: 1, rid: null, mood: null, needs: [] };
 
     const MOODS = {
@@ -521,7 +522,8 @@
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300')}
+              <p class="text-xl font-bold text-slate-800 truncate pr-2">${r.name}</p>
+              ${icon('zoom-in', 'w-5 h-5 text-slate-300')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
@@ -617,14 +619,14 @@
       switch (a) {
         case 'nav':
           S.view = v;
-          localStorage.setItem('rt_last_view', v);
+          sessionStorage.setItem('rt_last_view', v); // PERBAIKAN SINI
           render();
           window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
           loadData();
           break;
         case 'start':
           S.view = 'checkin';
-          localStorage.setItem('rt_last_view', 'checkin');
+          sessionStorage.setItem('rt_last_view', 'checkin'); // PERBAIKAN SINI
           S.step = 1; S.rid = id; S.mood = null; S.needs = [];
           render();
           window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
