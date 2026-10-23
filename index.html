@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6D28D9" />
+  <title>RuangTerhubung — Check-in Perasaan Lansia</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Library Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Atkinson Hyperlegible"', 'sans-serif'] },
+          colors: { brand: { 50: '#f5f3ff', 100: '#ede9fe', 700: '#6D28D9', 800: '#5b21b6' } }
+        }
+      }
+    };
+  </script>
+  <style>
+    html {
+      font-size: 19px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #ede9fe;
+    }
+
+    .btn:active {
+      transform: scale(.97);
+      transition: transform .12s;
+    }
+
+    .rise {
+      animation: rise .35s ease both;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-sans text-slate-900 antialiased">
+  <div id="app" class="max-w-xl mx-auto min-h-screen bg-slate-50 shadow-2xl relative pb-28">
+    <main id="view" class="h-full"></main>
+  </div>
+  <nav id="bottom-nav"
+    class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-40 bg-white border-t-2 border-slate-200"></nav>
+  <div id="toast-root"></div>
+
+  <script>
+    // ==========================================
+    // 1. KONEKSI KE SUPABASE
+    // ==========================================
+    const supabaseUrl = 'https://qbqqexduxvoykzhxflps.supabase.co';
+    const supabaseKey = 'sb_publishable_uGEAHL2TBO70d6L-pCo-0A_hNjH8my9';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // ==========================================
+    // 2. STATE & DATA
+    // ==========================================
+    let DB = { residents: [] };
+    const S = { view: 'landing', step: 1, rid: null, mood: null, needs: [] };
+
+    const MOODS = {
+      1: { emoji: '😢', label: 'Sedih', color: '#b91c1c', soft: '#fee2e2' },
+      2: { emoji: '🙂', label: 'Biasa saja', color: '#a16207', soft: '#fef3c7' },
+      3: { emoji: '😊', label: 'Senang', color: '#047857', soft: '#d1fae5' }
+    };
+
+    const NEEDS = [
+      { id: 'ngobrol', emoji: '💬', label: 'Ditemani ngobrol' },
+      { id: 'keluarga', emoji: '📞', label: 'Menghubungi keluarga' },
+      { id: 'ibadah', emoji: '🙏', label: 'Beribadah' },
+      { id: 'jalan', emoji: '🌿', label: 'Jalan-jalan' },
+      { id: 'kegiatan', emoji: '🎨', label: 'Ikut kegiatan' },
+      { id: 'sepi', emoji: '😞', label: 'Merasa kesepian' }
+    ];
+
+    const $ = s => document.querySelector(s);
+    const icon = (name, cls = 'w-7 h-7') => `<i data-lucide="${name}" class="${cls}"></i>`;
+    const avatar = (name) => `<div class="w-14 h-14 shrink-0 rounded-full bg-brand-700 text-white text-2xl font-bold flex items-center justify-center">${name ? name[0].toUpperCase() : '?'}</div>`;
+
+    function toast(msg) {
+      const el = document.createElement('div');
+      el.className = `fixed top-4 left-1/2 -translate-x-1/2 z-[100] rise bg-slate-900 text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center`;
+      el.textContent = msg;
+      $('#toast-root').appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ==========================================
+    // 3. FUNGSI DATABASE
+    // ==========================================
+    async function loadData() {
+      const { data, error } = await supabaseClient.from('residents').select('*').order('id', { ascending: true });
+      if (data) {
+        DB.residents = data;
+        if (S.view !== 'landing') render();
+      }
+    }
+
+    async function finishCheckin() {
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      const moodName = S.mood === 1 ? 'sad' : S.mood === 2 ? 'neutral' : 'happy';
+
+      // Mengambil data history sebelumnya jika ada, atau buat history contoh default
+      const r = DB.residents.find(x => x.id == S.rid);
+      let updatedHistory = Array.isArray(r.history) && r.history.length === 7
+        ? [...r.history]
+        : ['happy', 'happy', 'neutral', 'sad', 'neutral', 'happy', null];
+
+      // Perbarui hari ke-7 (hari ini) dengan mood yang baru diisi
+      updatedHistory[6] = moodName;
+
+      await supabaseClient.from('residents').update({
+        filled: true,
+        time: timeStr,
+        mood: moodName,
+        needs: S.needs,
+        history: updatedHistory
+      }).eq('id', S.rid);
+
+      S.step = 3;
+      render();
+      loadData();
+    }
+
+    async function addResident() {
+      const name = $('#a-name').value.trim();
+      const room = $('#a-room').value.trim();
+      if (!name) return toast('Mohon isi nama dulu');
+
+      const defaultHistory = ['happy', 'neutral', 'happy', 'happy', 'neutral', 'happy', null];
+
+      await supabaseClient.from('residents').insert([{
+        name,
+        room,
+        filled: false,
+        needs: [],
+        history: defaultHistory
+      }]);
+      toast(`${name} ditambahkan!`);
+
+      $('#a-name').value = '';
+      $('#a-room').value = '';
+      loadData();
+    }
+
+    // ==========================================
+    // 4. TAMPILAN HALAMAN (UI)
+    // ==========================================
+    function viewLanding() {
+      return `
+  <div class="min-h-screen bg-brand-700 flex flex-col items-center justify-center text-white px-6 text-center relative z-50">
+    <div class="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-6 rise">${icon('heart-handshake', 'w-12 h-12 text-white')}</div>
+    <h1 class="text-4xl font-bold mb-3 rise">RuangTerhubung</h1>
+    <p class="text-xl text-brand-100 mb-10 rise">Sistem pantauan emosional harian lansia.</p>
+    <button data-a="nav" data-v="home" class="btn w-full max-w-sm min-h-[68px] rounded-2xl text-xl font-bold bg-white text-brand-800 rise">Masuk ke Aplikasi</button>
+  </div>`;
+    }
+
+    function viewHome() {
+      const done = DB.residents.filter(r => r.filled).length;
+      return `
+  <header class="bg-brand-700 text-white px-5 pt-8 pb-7 rounded-b-3xl">
+    <h1 class="text-3xl font-bold">Selamat datang! 👋</h1>
+  </header>
+  <div class="px-4 mt-5 space-y-5">
+    <div class="bg-white rounded-2xl border-2 border-slate-200 p-4 flex items-center gap-3">
+      <span class="text-3xl">📋</span>
+      <p class="text-lg"><b>${done} dari ${DB.residents.length}</b> orang sudah mengisi hari ini</p>
+    </div>
+    <section>
+      <h2 class="text-2xl font-bold mb-3">Siapa Anda?</h2>
+      <div class="space-y-3">
+        ${DB.residents.map(r => `
+        <button data-a="start" data-id="${r.id}" class="btn w-full text-left bg-white rounded-2xl border-2 ${r.filled ? 'border-emerald-400' : 'border-slate-300'} p-4 flex items-center gap-4">
+          ${avatar(r.name)}
+          <span class="flex-1">
+            <span class="block text-xl font-bold">${r.name}</span>
+            <span class="block text-base ${r.filled ? 'text-emerald-700' : 'text-slate-600'}">${r.filled ? 'Sudah mengisi (' + (r.time || '') + ')' : 'Belum mengisi'}</span>
+          </span>
+          ${icon('chevron-right', 'w-7 h-7 text-slate-400')}
+        </button>`).join('')}
+      </div>
+    </section>
+  </div>`;
+    }
+
+    function viewCheckin() {
+      const r = DB.residents.find(x => x.id == S.rid);
+      if (!r) return viewHome();
+
+      if (S.step === 1) return `
+    <div class="px-4 pt-5"><button data-a="nav" data-v="home" class="btn bg-white border-2 px-4 py-2 rounded-xl font-bold">Kembali</button></div>
+    <div class="px-4 mt-5 rise">
+      <h1 class="text-3xl font-bold">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700">Bagaimana perasaan Anda hari ini?</span></h1>
+      <div class="mt-6 space-y-4">
+        ${[3, 2, 1].map(k => `
+        <button data-a="mood" data-v="${k}" class="btn w-full min-h-[120px] rounded-3xl border-4 flex items-center gap-5 px-6" style="background:${MOODS[k].soft};border-color:${MOODS[k].color}">
+          <span class="text-7xl">${MOODS[k].emoji}</span>
+          <span class="text-3xl font-bold" style="color:${MOODS[k].color}">${MOODS[k].label}</span>
+        </button>`).join('')}
+      </div>
+    </div>`;
+
+      if (S.step === 2) return `
+    <div class="px-4 pt-5"><button data-a="back" class="btn bg-white border-2 px-4 py-2 rounded-xl font-bold">Kembali</button></div>
+    <div class="px-4 mt-5 rise">
+      <h1 class="text-3xl font-bold">Apakah Anda memerlukan sesuatu?</h1>
+      <div class="mt-5 space-y-3">
+        ${NEEDS.map(n => {
+        const on = S.needs.includes(n.label); return `
+        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[72px] rounded-2xl border-4 text-xl font-bold flex items-center gap-4 px-5 text-left ${on ? 'bg-brand-700 text-white' : 'bg-white'}">
+          <span class="text-4xl">${n.emoji}</span><span class="flex-1">${n.label}</span>
+        </button>`;
+      }).join('')}
+      </div>
+      <button data-a="finish" class="btn mt-6 w-full min-h-[68px] rounded-2xl bg-emerald-700 text-white text-xl font-bold">Kirim Laporan</button>
+    </div>`;
+
+      return `
+    <div class="px-4 pt-14 text-center rise">
+      <div class="text-8xl">${MOODS[S.mood].emoji}</div>
+      <h1 class="text-3xl font-bold mt-4">Terima kasih!</h1>
+      <p class="text-xl mt-3 text-slate-700">Laporan Anda sudah tersimpan di database.</p>
+      <button data-a="nav" data-v="home" class="btn mt-8 w-full min-h-[68px] rounded-2xl bg-brand-700 text-white text-xl font-bold">Kembali ke Beranda</button>
+    </div>`;
+    }
+
+    // ==========================================
+    // HALAMAN PANTAUAN + REKAP 7 HARI TERAKHIR
+    // ==========================================
+    function viewWatch() {
+      const att = DB.residents.filter(r => r.filled && (r.mood === 'sad' || (r.needs && r.needs.length > 0)));
+      const pending = DB.residents.filter(r => !r.filled);
+
+      const moodUI = {
+        'sad': { emoji: '😢', label: 'Sedih', color: '#b91c1c', soft: '#fee2e2' },
+        'neutral': { emoji: '🙂', label: 'Biasa saja', color: '#a16207', soft: '#fef3c7' },
+        'happy': { emoji: '😊', label: 'Senang', color: '#047857', soft: '#d1fae5' }
+      };
+
+      // Menghitung singkatan 7 hari terakhir (contoh: Sab, Min, Sen...)
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toLocaleDateString('id-ID', { weekday: 'short' }).slice(0, 3);
+      });
+
+      return `
+  <header class="bg-brand-700 text-white px-5 pt-8 pb-7 rounded-b-3xl">
+    <h1 class="text-3xl font-bold">Pantauan Pengasuh</h1>
+  </header>
+  <div class="px-4 mt-5 space-y-6">
+    <section>
+      <h2 class="text-2xl font-bold mb-3 flex items-center gap-2">🔔 Perlu Diperhatikan</h2>
+      ${att.length ? `<div class="space-y-3">${att.map(r => {
+        const m = moodUI[r.mood] || moodUI['neutral'];
+        return `
+        <div class="rounded-2xl border-4 p-4 bg-white" style="border-color:${m.color}">
+          <div class="flex items-center gap-3">
+            ${avatar(r.name)}
+            <div class="flex-1 min-w-0">
+              <p class="text-xl font-bold truncate">${r.name}</p>
+              <p class="text-base text-slate-600">Kamar ${r.room || '-'}</p>
+            </div>
+            <span class="text-5xl">${m.emoji}</span>
+          </div>
+          <p class="text-lg font-bold mt-3" style="color:${m.color}">${m.label}</p>
+          ${r.needs && r.needs.length ? `<ul class="mt-2 space-y-2">${r.needs.map(n => `<li class="text-lg flex gap-2"><span>▪</span> ${n}</li>`).join('')}</ul>` : ''}
+        </div>`;
+      }).join('')}</div>`
+          : `<div class="bg-emerald-100 text-emerald-900 border-2 border-emerald-400 rounded-2xl p-5 text-xl font-bold">✅ Semua dalam keadaan baik hari ini.</div>`}
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-bold mb-3 flex items-center gap-2">⏳ Belum Mengisi</h2>
+      ${pending.length ? `<div class="space-y-3">${pending.map(r => `
+        <div class="w-full text-left bg-white rounded-2xl border-2 border-slate-300 p-4 flex items-center gap-4">
+          ${avatar(r.name)}
+          <span class="flex-1 text-xl font-bold truncate">${r.name}</span>
+          <span class="text-slate-500 font-bold text-lg">Belum ada data</span>
+        </div>`).join('')}</div>`
+          : `<p class="text-lg text-slate-600 bg-white border-2 border-slate-200 rounded-2xl p-4">Semua sudah mengisi 🎉</p>`}
+    </section>
+
+    <!-- BAGIAN 7 HARI TERAKHIR YANG DIKEMBALIKAN -->
+    <section class="pb-4">
+      <h2 class="text-2xl font-bold mb-3 flex items-center gap-2">📅 7 Hari Terakhir</h2>
+      <div class="space-y-3">
+        ${DB.residents.map(r => {
+            // Ambil array history dari database, jika tidak ada/error gunakan array default
+            const hist = Array.isArray(r.history) && r.history.length === 7
+              ? r.history
+              : ['happy', 'happy', 'neutral', 'sad', 'neutral', 'happy', r.mood || null];
+
+            return `
+          <div class="bg-white border-2 border-slate-200 rounded-2xl p-4">
+            <p class="text-xl font-bold mb-3 truncate">${r.name}</p>
+            <div class="grid grid-cols-7 gap-1 text-center">
+              ${hist.map((moodStr, i) => {
+              const m = moodUI[moodStr];
+              return `
+                <div>
+                  <div class="aspect-square rounded-xl flex items-center justify-center text-2xl ${m ? '' : 'bg-slate-100 text-slate-300'}" 
+                       ${m ? `style="background:${m.soft}"` : ''}>
+                    ${m ? m.emoji : '–'}
+                  </div>
+                  <p class="text-[11px] font-bold text-slate-500 mt-1">${last7Days[i]}</p>
+                </div>`;
+            }).join('')}
+            </div>
+          </div>`;
+          }).join('')}
+      </div>
+    </section>
+  </div>`;
+    }
+
+    function viewManage() {
+      return `
+  <header class="bg-brand-700 text-white px-5 pt-8 pb-7 rounded-b-3xl"><h1 class="text-3xl font-bold">Kelola Lansia</h1></header>
+  <div class="px-4 mt-5 space-y-6">
+    <section class="bg-white border-2 border-slate-200 rounded-2xl p-4">
+      <h2 class="text-2xl font-bold mb-3">➕ Tambah Nama</h2>
+      <input id="a-name" placeholder="Nama Lengkap" class="w-full border-2 rounded-xl p-3 mb-2 text-lg">
+      <input id="a-room" placeholder="Kamar (Opsional)" class="w-full border-2 rounded-xl p-3 mb-3 text-lg">
+      <button data-a="add" class="btn w-full bg-brand-700 text-white py-3 rounded-xl font-bold text-lg">Tambah ke Database</button>
+    </section>
+  </div>`;
+    }
+
+    // ==========================================
+    // 5. RENDER & EVENT LISTENER
+    // ==========================================
+    function renderNav() {
+      const nav = $('#bottom-nav');
+      nav.style.display = (S.view === 'checkin' || S.view === 'landing') ? 'none' : '';
+      const item = (v, ic, label) => `<button data-a="nav" data-v="${v}" class="btn flex-1 flex flex-col items-center py-2 ${S.view === v ? 'text-brand-800' : 'text-slate-500'}">${icon(ic)}<span class="text-sm font-bold">${label}</span></button>`;
+      nav.innerHTML = `<div class="flex">${item('home', 'house', 'Beranda')}${item('watch', 'clipboard-list', 'Pantauan')}${item('manage', 'users', 'Kelola')}</div>`;
+    }
+
+    const VIEWS = { landing: viewLanding, home: viewHome, checkin: viewCheckin, watch: viewWatch, manage: viewManage };
+
+    function render() {
+      $('#view').innerHTML = VIEWS[S.view]();
+      renderNav();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    document.addEventListener('click', e => {
+      const el = e.target.closest('[data-a]'); if (!el) return;
+      const { a, id, v } = el.dataset;
+      switch (a) {
+        case 'nav': S.view = v; loadData(); render(); window.scrollTo(0, 0); break;
+        case 'start': S.view = 'checkin'; S.step = 1; S.rid = id; S.mood = null; S.needs = []; render(); window.scrollTo(0, 0); break;
+        case 'back': S.step = 1; render(); window.scrollTo(0, 0); break;
+        case 'mood': S.mood = +v; S.step = 2; render(); window.scrollTo(0, 0); break;
+        case 'need': S.needs.includes(id) ? S.needs = S.needs.filter(x => x !== id) : S.needs.push(id); render(); break;
+        case 'finish': finishCheckin(); break;
+        case 'add': addResident(); break;
+      }
+    });
+
+    loadData();
+    render();
+  </script>
+</body>
+
+</html>
