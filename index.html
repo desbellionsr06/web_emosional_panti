@@ -251,8 +251,9 @@
       if (window.lucide) lucide.createIcons();
     }
 
+
     // ==========================================
-    // 3. FUNGSI DATABASE
+    // 3. FUNGSI DATABASE (DIOPTIMASI ANTI-LAG)
     // ==========================================
     async function loadData() {
       try {
@@ -283,13 +284,13 @@
 
       const r = DB.residents.find(x => x.id == S.rid);
 
-      // LOGIKA BERGULIR 7 HARI (Rolling First-In First-Out)
+      // LOGIKA BERGULIR 7 HARI (Rolling First-In First-Out) dengan default kosong
       let updatedHistory = Array.isArray(r.history) && r.history.length === 7
         ? [...r.history]
-        : ['happy', 'neutral', 'happy', 'happy', 'neutral', 'happy', 'happy'];
+        : [null, null, null, null, null, null, null];
 
       if (!r.filled) {
-        // Jika form baru diisi hari ini: Geser semua data ke kiri (buang yang paling lama)
+        // Jika form baru diisi hari ini: Geser semua data ke kiri
         updatedHistory.shift();
         updatedHistory.push(moodName);
       } else {
@@ -316,8 +317,8 @@
       const room = $('#a-room').value.trim();
       if (!name) return toast('Mohon isi nama dulu');
 
-      // Menggunakan data utuh tanpa slot kosong agar animasi geser 7 hari mulus
-      const defaultHistory = ['happy', 'neutral', 'happy', 'happy', 'neutral', 'happy', 'happy'];
+      // PERBAIKAN: Lansia baru dibuat dengan riwayat 7 hari murni kosong
+      const defaultHistory = [null, null, null, null, null, null, null];
 
       const { error } = await supabaseClient.from('residents').insert([{
         name,
@@ -494,7 +495,7 @@
         ${DB.residents.map(r => {
             const hist = Array.isArray(r.history) && r.history.length === 7
               ? r.history
-              : ['happy', 'happy', 'neutral', 'sad', 'neutral', 'happy', r.mood || null];
+              : [null, null, null, null, null, null, null];
 
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 transition-all focus:outline-none">
