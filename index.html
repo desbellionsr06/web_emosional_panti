@@ -8,14 +8,17 @@
   <meta name="theme-color" content="#4e7ba6" />
   <title>RuangTerhubung — Check-in Perasaan Lansia</title>
 
-  <!-- Deteksi Error Anti-Blank Putih -->
+  <!-- Deteksi Error Anti-Blank Putih (DIPERBARUI ANTI ERROR PALSU WA/IG) -->
   <script>
     window.onerror = function (message, source, lineno, colno, error) {
+      // Abaikan error palsu "Script error" baris 0 yang berasal dari in-app browser (WA/IG/Line)
+      if (message.toLowerCase().includes("script error") && lineno === 0) return true;
+
       document.body.innerHTML = `<div style="padding: 20px; font-family: sans-serif; color: #b91c1c; background: #fee2e2; min-height: 100vh;">
         <h2 style="margin-top:0;">Terjadi Kesalahan Sistem!</h2>
         <p><b>Pesan:</b> ${message}</p>
         <p><b>Baris:</b> ${lineno}</p>
-        <p>Kemungkinan kode terpotong saat proses copy-paste. Silakan copy ulang seluruh kode.</p>
+        <p>Saran: Buka link ini menggunakan browser utama (seperti Chrome atau Safari), bukan dari dalam aplikasi chat.</p>
       </div>`;
     };
   </script>
@@ -518,8 +521,7 @@
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 truncate pr-2">${r.name}</p>
-              ${icon('zoom-in', 'w-5 h-5 text-slate-300')}
+              <p class="text-xl font-bold text-slate-800 truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
