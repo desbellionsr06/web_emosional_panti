@@ -7,6 +7,18 @@
   <meta name="theme-color" content="#6D28D9" />
   <title>RuangTerhubung — Check-in Perasaan Lansia</title>
 
+  <!-- Deteksi Error Anti-Blank Putih -->
+  <script>
+    window.onerror = function (message, source, lineno, colno, error) {
+      document.body.innerHTML = `<div style="padding: 20px; font-family: sans-serif; color: #b91c1c; background: #fee2e2; height: 100vh;">
+        <h2 style="margin-top:0;">Terjadi Kesalahan Sistem!</h2>
+        <p><b>Pesan:</b> ${message}</p>
+        <p><b>Baris:</b> ${lineno}</p>
+        <p>Kemungkinan kode terpotong saat proses copy-paste. Silakan copy ulang seluruh kode.</p>
+      </div>`;
+    };
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap"
     rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -32,7 +44,7 @@
     }
 
     body {
-      background: #ede9fe;
+      background: #f8fafc;
     }
 
     .btn:active {
@@ -55,20 +67,29 @@
         transform: none;
       }
     }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
 
-<body class="font-sans text-slate-900 antialiased overflow-x-hidden">
+<body class="font-sans text-slate-900 antialiased flex h-screen overflow-hidden">
 
-  <!-- Container utama dibuat w-full agar mengisi layar laptop, dengan penyesuaian padding untuk desktop -->
-  <div id="app" class="w-full min-h-screen bg-slate-50 relative pb-28 md:pb-12 md:pt-16">
+  <!-- Navigasi: Bottom Nav di HP, Sidebar di Laptop -->
+  <nav id="bottom-nav"
+    class="fixed bottom-0 w-full md:static md:w-72 md:h-full bg-white border-t-2 md:border-t-0 md:border-r border-slate-200 shadow-sm z-40 shrink-0 transition-all flex-col">
+  </nav>
+
+  <!-- Container Utama Konten -->
+  <div id="app" class="flex-1 h-full overflow-y-auto no-scrollbar relative w-full pb-24 md:pb-0">
     <main id="view" class="h-full"></main>
   </div>
-
-  <!-- Navigasi: Di HP di bawah (bottom-0), di Laptop di atas (md:top-0) -->
-  <nav id="bottom-nav"
-    class="fixed bottom-0 md:top-0 md:bottom-auto left-0 w-full z-40 bg-white border-t-2 md:border-t-0 md:border-b-2 border-slate-200 shadow-sm transition-all">
-  </nav>
 
   <div id="toast-root"></div>
 
@@ -77,7 +98,9 @@
     // 1. KONEKSI KE SUPABASE
     // ==========================================
     const supabaseUrl = 'https://qbqqexduxvoykzhxflps.supabase.co';
-    const supabaseKey = 'sb_publishable_uGEAHL2TBO70d6L-pCo-0A_hNjH8my9';
+    const supabaseKey = 'sb_publishable_uGEAHL2TB070d6L-pCo-0A_hNjH8my9';
+
+    if (!window.supabase) throw new Error("Library Supabase gagal dimuat. Pastikan koneksi internet aktif.");
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
@@ -107,7 +130,7 @@
 
     function toast(msg) {
       const el = document.createElement('div');
-      el.className = `fixed top-20 md:top-6 left-1/2 -translate-x-1/2 z-[100] rise bg-slate-900 text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
+      el.className = `fixed top-10 md:top-6 left-1/2 md:left-auto md:right-6 -translate-x-1/2 md:translate-x-0 z-[100] rise bg-slate-900 text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
       el.textContent = msg;
       $('#toast-root').appendChild(el);
       setTimeout(() => el.remove(), 3000);
@@ -117,10 +140,15 @@
     // 3. FUNGSI DATABASE
     // ==========================================
     async function loadData() {
-      const { data, error } = await supabaseClient.from('residents').select('*').order('id', { ascending: true });
-      if (data) {
-        DB.residents = data;
-        if (S.view !== 'landing') render();
+      try {
+        const { data, error } = await supabaseClient.from('residents').select('*').order('id', { ascending: true });
+        if (error) throw error;
+        if (data) {
+          DB.residents = data;
+          if (S.view !== 'landing') render();
+        }
+      } catch (err) {
+        console.error("Gagal memuat data:", err);
       }
     }
 
@@ -175,7 +203,6 @@
     // ==========================================
 
     function viewLanding() {
-      // Menggunakan inset-0 agar ungu memenuhi seluruh layar terlepas dari container
       return `
   <div class="fixed inset-0 bg-brand-700 flex flex-col items-center justify-center text-white px-6 text-center z-50">
     <div class="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-6 rise">${icon('heart-handshake', 'w-12 h-12 text-white')}</div>
@@ -188,28 +215,31 @@
     function viewHome() {
       const done = DB.residents.filter(r => r.filled).length;
       return `
-  <header class="bg-brand-700 text-white px-5 pt-8 pb-7 md:pt-12 md:pb-10 shadow-md">
-    <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl md:text-4xl font-bold">Selamat datang! 👋</h1>
-    </div>
-  </header>
-  <div class="px-4 mt-6 md:mt-8 space-y-6 max-w-5xl mx-auto">
-    <div class="bg-white rounded-2xl border-2 border-slate-200 p-4 flex items-center gap-4 shadow-sm">
+  <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-8 rise">
+    <header>
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Selamat datang! 👋</h1>
+      <p class="text-lg text-slate-500 mt-2">Pilih nama Anda untuk mulai check-in hari ini.</p>
+    </header>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4 shadow-sm">
       <span class="text-4xl">📋</span>
-      <p class="text-xl"><b>${done} dari ${DB.residents.length}</b> orang sudah mengisi hari ini</p>
+      <div>
+        <p class="text-xl font-bold text-slate-800">${done} dari ${DB.residents.length}</p>
+        <p class="text-base text-slate-500">Orang sudah mengisi hari ini</p>
+      </div>
     </div>
+
     <section>
-      <h2 class="text-2xl font-bold mb-4">Siapa Anda?</h2>
-      <!-- Grid akan menjadi 2 kolom di tablet (md) dan 3 kolom di laptop (lg) -->
+      <h2 class="text-xl font-bold text-slate-800 mb-4">Daftar Lansia</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${DB.residents.map(r => `
-        <button data-a="start" data-id="${r.id}" class="btn w-full text-left bg-white rounded-2xl border-2 ${r.filled ? 'border-emerald-400 shadow-emerald-100' : 'border-slate-300'} p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+        <button data-a="start" data-id="${r.id}" class="btn w-full text-left bg-white rounded-2xl border-2 ${r.filled ? 'border-emerald-400 shadow-emerald-50' : 'border-slate-200 hover:border-brand-400'} p-4 flex items-center gap-4 hover:shadow-md transition-all">
           ${avatar(r.name)}
           <span class="flex-1 min-w-0">
             <span class="block text-xl font-bold truncate">${r.name}</span>
-            <span class="block text-base ${r.filled ? 'text-emerald-700 font-medium' : 'text-slate-500'}">${r.filled ? 'Sudah mengisi (' + (r.time || '') + ')' : 'Belum mengisi'}</span>
+            <span class="block text-base ${r.filled ? 'text-emerald-700 font-medium' : 'text-slate-400'}">${r.filled ? 'Sudah mengisi (' + (r.time || '') + ')' : 'Belum mengisi'}</span>
           </span>
-          ${icon('chevron-right', 'w-7 h-7 text-slate-400')}
+          ${icon('chevron-right', 'w-7 h-7 text-slate-300')}
         </button>`).join('')}
       </div>
     </section>
@@ -221,42 +251,40 @@
       if (!r) return viewHome();
 
       if (S.step === 1) return `
-    <div class="max-w-5xl mx-auto px-4 pt-5 md:pt-8"><button data-a="nav" data-v="home" class="btn bg-white border-2 border-slate-300 px-5 py-2.5 rounded-xl font-bold hover:bg-slate-50 flex items-center gap-2 w-max">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
-    <div class="max-w-5xl mx-auto px-4 mt-6 md:mt-8 rise">
-      <h1 class="text-3xl md:text-5xl font-bold leading-tight">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700">Bagaimana perasaan Anda hari ini?</span></h1>
-      <!-- Grid menyamping di laptop -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="home" class="btn bg-white border border-slate-300 px-5 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
+      <h1 class="text-3xl md:text-5xl font-bold leading-tight text-slate-800">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700">Bagaimana perasaan Anda hari ini?</span></h1>
+      <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         ${[3, 2, 1].map(k => `
-        <button data-a="mood" data-v="${k}" class="btn w-full min-h-[140px] md:min-h-[180px] rounded-3xl border-4 flex flex-row md:flex-col justify-center items-center gap-5 px-6 hover:shadow-lg transition-shadow" style="background:${MOODS[k].soft};border-color:${MOODS[k].color}">
-          <span class="text-7xl md:text-8xl">${MOODS[k].emoji}</span>
+        <button data-a="mood" data-v="${k}" class="btn w-full min-h-[140px] md:min-h-[220px] rounded-3xl border-4 flex flex-row md:flex-col justify-center items-center gap-5 px-6 hover:shadow-xl transition-all" style="background:${MOODS[k].soft};border-color:${MOODS[k].color}">
+          <span class="text-7xl md:text-[100px]">${MOODS[k].emoji}</span>
           <span class="text-3xl md:text-4xl font-bold" style="color:${MOODS[k].color}">${MOODS[k].label}</span>
         </button>`).join('')}
       </div>
     </div>`;
 
       if (S.step === 2) return `
-    <div class="max-w-5xl mx-auto px-4 pt-5 md:pt-8"><button data-a="back" class="btn bg-white border-2 border-slate-300 px-5 py-2.5 rounded-xl font-bold hover:bg-slate-50 flex items-center gap-2 w-max">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
-    <div class="max-w-5xl mx-auto px-4 mt-6 md:mt-8 rise">
-      <h1 class="text-3xl md:text-4xl font-bold">Apakah Anda memerlukan sesuatu?</h1>
-      <p class="text-xl text-slate-600 mt-2">Bisa pilih lebih dari satu.</p>
-      <!-- Grid 2 kolom di desktop -->
-      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white border border-slate-300 px-5 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Apakah Anda memerlukan sesuatu?</h1>
+      <p class="text-xl text-slate-500 mt-2">Bisa pilih lebih dari satu pilihan di bawah.</p>
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         ${NEEDS.map(n => {
         const on = S.needs.includes(n.label); return `
-        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border-4 text-xl font-bold flex items-center gap-4 px-5 text-left transition-colors ${on ? 'bg-brand-700 border-brand-900 text-white shadow-md' : 'bg-white border-slate-300 hover:border-brand-300'}">
+        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border-4 text-xl font-bold flex items-center gap-4 px-6 text-left transition-colors ${on ? 'bg-brand-700 border-brand-900 text-white shadow-md' : 'bg-white border-transparent hover:border-brand-200 shadow-sm'}">
           <span class="text-4xl md:text-5xl">${n.emoji}</span><span class="flex-1">${n.label}</span>
         </button>`;
       }).join('')}
       </div>
-      <button data-a="finish" class="btn mt-8 w-full md:max-w-md mx-auto block min-h-[72px] rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-2xl font-bold shadow-lg">Kirim Laporan</button>
+      <button data-a="finish" class="btn mt-10 w-full md:max-w-md mx-auto block min-h-[72px] rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-2xl font-bold shadow-lg">Kirim Laporan</button>
     </div>`;
 
       return `
-    <div class="px-4 pt-20 text-center rise max-w-2xl mx-auto">
-      <div class="text-8xl md:text-[120px] drop-shadow-md">${MOODS[S.mood].emoji}</div>
-      <h1 class="text-4xl md:text-5xl font-bold mt-6">Terima kasih!</h1>
-      <p class="text-xl md:text-2xl mt-4 text-slate-700">Laporan Anda sudah tersimpan di database.</p>
-      <button data-a="nav" data-v="home" class="btn mt-10 w-full max-w-sm mx-auto flex justify-center items-center min-h-[72px] rounded-2xl bg-brand-700 hover:bg-brand-800 text-white text-xl font-bold shadow-xl">Kembali ke Beranda</button>
+    <div class="px-5 pt-24 text-center rise max-w-2xl mx-auto">
+      <div class="text-8xl md:text-[140px] drop-shadow-md">${MOODS[S.mood].emoji}</div>
+      <h1 class="text-4xl md:text-5xl font-bold mt-8 text-slate-800">Terima kasih!</h1>
+      <p class="text-xl md:text-2xl mt-4 text-slate-600">Laporan Anda sudah tersimpan di sistem.</p>
+      <button data-a="nav" data-v="home" class="btn mt-12 w-full max-w-sm mx-auto flex justify-center items-center min-h-[72px] rounded-2xl bg-brand-700 hover:bg-brand-800 text-white text-xl font-bold shadow-xl">Kembali ke Beranda</button>
     </div>`;
     }
 
@@ -277,65 +305,65 @@
       });
 
       return `
-  <header class="bg-brand-700 text-white px-5 pt-8 pb-7 md:pt-12 md:pb-10 shadow-md">
-    <div class="max-w-5xl mx-auto">
-      <h1 class="text-3xl md:text-4xl font-bold">Pantauan Pengasuh</h1>
-    </div>
-  </header>
-  <div class="px-4 mt-6 md:mt-8 space-y-8 max-w-5xl mx-auto">
+  <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-10 rise">
+    <header>
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Pantauan Pengasuh</h1>
+      <p class="text-lg text-slate-500 mt-2">Ringkasan kondisi dan kebutuhan lansia hari ini.</p>
+    </header>
+
     <section>
-      <h2 class="text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">🔔 Perlu Diperhatikan</h2>
-      ${att.length ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${att.map(r => {
+      <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-5 flex items-center gap-2">🔔 Perlu Diperhatikan</h2>
+      ${att.length ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-5">${att.map(r => {
         const m = moodUI[r.mood] || moodUI['neutral'];
         return `
-        <div class="rounded-2xl border-4 p-5 bg-white shadow-sm flex flex-col" style="border-color:${m.color}">
-          <div class="flex items-center gap-4 border-b pb-4 mb-4">
+        <div class="rounded-3xl border-4 p-6 bg-white shadow-sm flex flex-col" style="border-color:${m.color}">
+          <div class="flex items-center gap-4 border-b border-slate-100 pb-5 mb-5">
             ${avatar(r.name)}
             <div class="flex-1 min-w-0">
-              <p class="text-xl font-bold truncate">${r.name}</p>
-              <p class="text-base text-slate-500 font-medium">Kamar ${r.room || '-'}</p>
+              <p class="text-xl font-bold truncate text-slate-800">${r.name}</p>
+              <p class="text-base text-slate-500">Kamar ${r.room || '-'}</p>
             </div>
-            <span class="text-5xl md:text-6xl">${m.emoji}</span>
+            <span class="text-5xl md:text-6xl drop-shadow-sm">${m.emoji}</span>
           </div>
           <p class="text-xl font-bold" style="color:${m.color}">${m.label}</p>
-          ${r.needs && r.needs.length ? `<ul class="mt-3 space-y-2 flex-1">${r.needs.map(n => `<li class="text-lg flex items-start gap-2"><span class="mt-1">▪</span> <span>${n}</span></li>`).join('')}</ul>` : ''}
+          ${r.needs && r.needs.length ? `<ul class="mt-4 space-y-3 flex-1">${r.needs.map(n => `<li class="text-lg text-slate-700 flex items-start gap-2"><span class="mt-1 text-slate-400">▪</span> <span>${n}</span></li>`).join('')}</ul>` : ''}
         </div>`;
       }).join('')}</div>`
-          : `<div class="bg-emerald-50 text-emerald-800 border-2 border-emerald-300 rounded-2xl p-6 text-xl font-bold shadow-sm">✅ Semua dalam keadaan baik hari ini.</div>`}
+          : `<div class="bg-emerald-50 text-emerald-800 border-2 border-emerald-200 rounded-2xl p-6 text-xl font-bold shadow-sm">✅ Semua lansia dalam keadaan baik hari ini.</div>`}
     </section>
 
     <section>
-      <h2 class="text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">⏳ Belum Mengisi</h2>
+      <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-5 flex items-center gap-2">⏳ Belum Mengisi</h2>
       ${pending.length ? `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${pending.map(r => `
-        <div class="w-full text-left bg-white rounded-2xl border-2 border-slate-300 p-4 flex items-center gap-4 shadow-sm">
+        <div class="w-full bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-4 shadow-sm">
           ${avatar(r.name)}
-          <span class="flex-1 text-xl font-bold truncate">${r.name}</span>
-          <span class="text-slate-400 font-medium text-base">Belum ada data</span>
+          <span class="flex-1 text-xl font-bold text-slate-700 truncate">${r.name}</span>
+          <span class="text-slate-400 font-medium text-sm border border-slate-200 px-3 py-1 rounded-full">Belum</span>
         </div>`).join('')}</div>`
-          : `<p class="text-lg text-slate-600 bg-white border-2 border-slate-200 rounded-2xl p-6 shadow-sm">Semua sudah mengisi 🎉</p>`}
+          : `<p class="text-lg text-slate-500 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">Semua lansia sudah mengisi form 🎉</p>`}
     </section>
 
     <section class="pb-8">
-      <h2 class="text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">📅 7 Hari Terakhir</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-5 flex items-center gap-2">📅 Riwayat 7 Hari Terakhir</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         ${DB.residents.map(r => {
             const hist = Array.isArray(r.history) && r.history.length === 7
               ? r.history
               : ['happy', 'happy', 'neutral', 'sad', 'neutral', 'happy', r.mood || null];
 
             return `
-          <div class="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-            <p class="text-xl font-bold mb-4 truncate">${r.name}</p>
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <p class="text-xl font-bold text-slate-800 mb-5 truncate">${r.name}</p>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
               const m = moodUI[moodStr];
               return `
-                <div>
-                  <div class="aspect-square rounded-xl flex items-center justify-center text-xl md:text-2xl ${m ? '' : 'bg-slate-100 text-slate-300'}" 
+                <div class="flex flex-col items-center">
+                  <div class="w-full aspect-square rounded-xl flex items-center justify-center text-xl md:text-2xl ${m ? '' : 'bg-slate-50 text-slate-300 border border-slate-100'}" 
                        ${m ? `style="background:${m.soft}"` : ''} title="${m ? m.label : 'Belum isi'}">
                     ${m ? m.emoji : '–'}
                   </div>
-                  <p class="text-[11px] md:text-xs font-bold text-slate-500 mt-1">${last7Days[i]}</p>
+                  <p class="text-[11px] md:text-xs font-bold text-slate-400 mt-2">${last7Days[i]}</p>
                 </div>`;
             }).join('')}
             </div>
@@ -348,46 +376,64 @@
 
     function viewManage() {
       return `
-  <header class="bg-brand-700 text-white px-5 pt-8 pb-7 md:pt-12 md:pb-10 shadow-md">
-    <div class="max-w-5xl mx-auto"><h1 class="text-3xl md:text-4xl font-bold">Kelola Lansia</h1></div>
-  </header>
-  <div class="px-4 mt-6 md:mt-8 space-y-6 max-w-2xl mx-auto">
-    <section class="bg-white border-2 border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
-      <h2 class="text-2xl md:text-3xl font-bold mb-5 flex items-center gap-2">➕ Tambah Nama Baru</h2>
-      <div class="space-y-4">
+  <div class="p-5 md:p-10 max-w-3xl mx-auto space-y-8 rise">
+    <header>
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Kelola Lansia</h1>
+      <p class="text-lg text-slate-500 mt-2">Tambahkan data lansia ke dalam sistem.</p>
+    </header>
+
+    <section class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
+      <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">➕ Tambah Nama Baru</h2>
+      <div class="space-y-5">
         <div>
-          <label class="block text-slate-700 font-bold mb-2">Nama Lengkap</label>
-          <input id="a-name" placeholder="Contoh: Oma Ratna" class="w-full border-2 border-slate-300 focus:border-brand-500 rounded-xl p-4 text-lg outline-none transition-colors">
+          <label class="block text-slate-600 font-bold mb-2">Nama Lengkap</label>
+          <input id="a-name" placeholder="Contoh: Oma Ratna" class="w-full border-2 border-slate-200 focus:border-brand-500 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 focus:bg-white">
         </div>
         <div>
-          <label class="block text-slate-700 font-bold mb-2">Kamar (Opsional)</label>
-          <input id="a-room" placeholder="Contoh: Melati 03" class="w-full border-2 border-slate-300 focus:border-brand-500 rounded-xl p-4 text-lg outline-none transition-colors">
+          <label class="block text-slate-600 font-bold mb-2">Kamar (Opsional)</label>
+          <input id="a-room" placeholder="Contoh: Melati 03" class="w-full border-2 border-slate-200 focus:border-brand-500 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 focus:bg-white">
         </div>
-        <button data-a="add" class="btn w-full bg-brand-700 hover:bg-brand-800 text-white py-4 mt-2 rounded-xl font-bold text-xl shadow-md">Tambah</button>
+        <button data-a="add" class="btn w-full bg-brand-700 hover:bg-brand-800 text-white py-4 mt-4 rounded-xl font-bold text-xl shadow-md">Simpan ke Database</button>
       </div>
     </section>
   </div>`;
     }
 
     // ==========================================
-    // 5. RENDER & EVENT LISTENER
+    // 5. RENDER & EVENT LISTENER (SIDEBAR LOGIC)
     // ==========================================
     function renderNav() {
       const nav = $('#bottom-nav');
-      // Sembunyikan navigasi di halaman checkin & landing
-      nav.style.display = (S.view === 'checkin' || S.view === 'landing') ? 'none' : '';
 
-      const item = (v, ic, label) => {
-        const isActive = S.view === v;
-        return `
-        <button data-a="nav" data-v="${v}" class="btn flex-1 md:flex-none md:px-6 md:py-3 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-2 transition-all ${isActive ? 'text-brand-800 md:bg-brand-50 md:rounded-xl' : 'text-slate-500 md:hover:bg-slate-50 md:rounded-xl'}">
-          ${icon(ic, 'w-6 h-6 md:w-5 md:h-5')}
-          <span class="text-[13px] md:text-base font-bold">${label}</span>
+      if (S.view === 'checkin' || S.view === 'landing') {
+        nav.style.display = 'none';
+        return;
+      }
+
+      // PERBAIKAN: Menggunakan display block agar sidebar bertumpuk ke bawah (bukan ke samping)
+      nav.style.display = 'block';
+
+      const isActive = (v) => S.view === v;
+
+      const item = (v, ic, label) => `
+        <button data-a="nav" data-v="${v}" class="btn flex-1 md:flex-none flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-4 py-3 md:py-4 md:px-6 md:rounded-2xl transition-all ${isActive(v) ? 'text-brand-700 md:bg-brand-50 md:shadow-sm' : 'text-slate-400 hover:text-slate-800 md:hover:bg-slate-50'}">
+          ${icon(ic, 'w-6 h-6')}
+          <span class="text-[12px] md:text-lg font-bold">${label}</span>
         </button>`;
-      };
 
-      // Pada tampilan desktop (md:), menu akan berjejer di tengah dengan tampilan profesional
-      nav.innerHTML = `<div class="flex max-w-5xl mx-auto px-2 md:px-5 justify-between md:justify-start md:gap-4 md:items-center md:h-16">${item('home', 'house', 'Beranda')}${item('watch', 'clipboard-list', 'Pantauan Pengasuh')}${item('manage', 'users', 'Kelola Lansia')}</div>`;
+      const brandHeader = `
+        <div class="hidden md:flex flex-col items-center justify-center gap-3 px-6 pb-6 pt-10 border-b border-slate-100 text-brand-700 w-full mb-4">
+          <div class="bg-brand-100 p-3 rounded-2xl">${icon('heart-handshake', 'w-10 h-10')}</div>
+          <span class="text-2xl font-bold text-center">Ruang<br>Terhubung</span>
+        </div>`;
+
+      nav.innerHTML = `
+        ${brandHeader}
+        <div class="flex flex-row md:flex-col w-full gap-1 md:gap-2 px-2 md:px-4">
+          ${item('home', 'house', 'Beranda')}
+          ${item('watch', 'clipboard-list', 'Pantauan')}
+          ${item('manage', 'users', 'Kelola')}
+        </div>`;
     }
 
     const VIEWS = { landing: viewLanding, home: viewHome, checkin: viewCheckin, watch: viewWatch, manage: viewManage };
@@ -402,10 +448,10 @@
       const el = e.target.closest('[data-a]'); if (!el) return;
       const { a, id, v } = el.dataset;
       switch (a) {
-        case 'nav': S.view = v; loadData(); render(); window.scrollTo(0, 0); break;
-        case 'start': S.view = 'checkin'; S.step = 1; S.rid = id; S.mood = null; S.needs = []; render(); window.scrollTo(0, 0); break;
-        case 'back': S.step = 1; render(); window.scrollTo(0, 0); break;
-        case 'mood': S.mood = +v; S.step = 2; render(); window.scrollTo(0, 0); break;
+        case 'nav': S.view = v; loadData(); render(); $('#app').scrollTo(0, 0); break;
+        case 'start': S.view = 'checkin'; S.step = 1; S.rid = id; S.mood = null; S.needs = []; render(); $('#app').scrollTo(0, 0); break;
+        case 'back': S.step = 1; render(); $('#app').scrollTo(0, 0); break;
+        case 'mood': S.mood = +v; S.step = 2; render(); $('#app').scrollTo(0, 0); break;
         case 'need': S.needs.includes(id) ? S.needs = S.needs.filter(x => x !== id) : S.needs.push(id); render(); break;
         case 'finish': finishCheckin(); break;
         case 'add': addResident(); break;
