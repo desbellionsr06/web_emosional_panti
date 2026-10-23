@@ -135,7 +135,14 @@
 </head>
 
 <body
-  class="font-sans text-slate-900 bg-cream-main dark:bg-[#1e293b] dark:text-slate-100 antialiased md:flex md:h-screen md:overflow-hidden transition-colors">
+  class="font-sans text-slate-900 bg-cream-main dark:bg-[#1e293b] dark:text-slate-100 antialiased md:flex md:h-screen md:overflow-hidden transition-colors relative">
+
+  <!-- Tombol Tema: Kini jadi tombol universal di pojok kanan atas untuk semua ukuran layar -->
+  <button onclick="toggleTheme()" id="mobile-theme-btn"
+    class="fixed top-5 right-5 z-50 p-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-full shadow-md text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all"
+    style="display: none;">
+    <i data-lucide="moon" id="mobile-theme-icon" class="w-6 h-6"></i>
+  </button>
 
   <!-- Navigasi -->
   <nav id="bottom-nav"
@@ -144,7 +151,7 @@
 
   <!-- Container Utama Konten -->
   <div id="app"
-    class="w-full pb-28 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative transition-colors">
+    class="w-full pb-28 pt-16 md:pt-0 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative transition-colors">
     <main id="view" class="h-full"></main>
   </div>
 
@@ -153,7 +160,9 @@
   <div id="toast-root"></div>
 
   <script>
-    // Inisialisasi Dark Mode dari LocalStorage
+    // ==========================================
+    // TEMA: DARK / LIGHT MODE
+    // ==========================================
     let isDark = localStorage.getItem('rt_theme') === 'dark';
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -171,7 +180,15 @@
         localStorage.setItem('rt_theme', 'light');
         document.querySelector('meta[name="theme-color"]').setAttribute("content", "#fafafa");
       }
-      renderNav();
+      updateMobileThemeIcon();
+    }
+
+    function updateMobileThemeIcon() {
+      const iconEl = $('#mobile-theme-icon');
+      if (iconEl) {
+        iconEl.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+        if (window.lucide) lucide.createIcons();
+      }
     }
 
     // ==========================================
@@ -190,11 +207,10 @@
     const savedView = sessionStorage.getItem('rt_last_view') || 'landing';
     const S = { view: savedView, step: 1, rid: null, mood: null, needs: [] };
 
-    // PERBAIKAN: Mengganti semua emoji dengan Icon Lucide & Menyesuaikan warna yang tidak menabrak dark mode
     const MOODS = {
-      1: { icon: 'frown', label: 'Sedih', color: '#ef4444' }, // Red
-      2: { icon: 'meh', label: 'Biasa saja', color: '#f59e0b' }, // Amber
-      3: { icon: 'smile', label: 'Senang', color: '#10b981' } // Emerald
+      1: { icon: 'frown', label: 'Sedih', color: '#ef4444' },
+      2: { icon: 'meh', label: 'Biasa saja', color: '#f59e0b' },
+      3: { icon: 'smile', label: 'Senang', color: '#10b981' }
     };
 
     const NEEDS = [
@@ -210,12 +226,12 @@
     const icon = (name, cls = 'w-7 h-7') => `<i data-lucide="${name}" class="${cls}"></i>`;
     const avatar = (name) => `<div class="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full bg-brand-800 dark:bg-brand-600 text-white text-xl md:text-2xl font-bold flex items-center justify-center">${name ? name[0].toUpperCase() : '?'}</div>`;
 
-    function toast(msg, isError = false) {
+    function toast(msg, isError = false, duration = 4000) {
       const el = document.createElement('div');
       el.className = `fixed top-10 md:top-6 left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-800'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
       el.textContent = msg;
       $('#toast-root').appendChild(el);
-      setTimeout(() => el.remove(), 4000);
+      setTimeout(() => el.remove(), duration);
     }
 
     function closeDetail() { $('#modal-root').innerHTML = ''; }
@@ -342,6 +358,9 @@
     // ==========================================
 
     function viewLanding() {
+      const mobBtn = $('#mobile-theme-btn');
+      if (mobBtn) mobBtn.style.display = 'none';
+
       return `
   <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-50 transition-colors duration-300">
     <div class="flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
@@ -351,7 +370,7 @@
         </div>
         <span class="leading-tight">Teman<br>Rasa</span>
       </div>
-      <button class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
+      <button data-a="help" class="btn flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
         <span class="bg-slate-700 dark:bg-slate-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">?</span> Bantuan
       </button>
     </div>
@@ -379,11 +398,13 @@
     }
 
     function viewHome() {
+      const mobBtn = $('#mobile-theme-btn');
+      if (mobBtn) mobBtn.style.display = 'block';
+
       const done = DB.residents.filter(r => r.filled).length;
       return `
   <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-8 rise">
     <header>
-      <!-- PERBAIKAN: Emoji tangan diganti dengan Icon Lucide -->
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white flex items-center gap-3">Selamat datang!👋</h1>
       <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Pilih nama Anda untuk mulai check-in hari ini.</p>
     </header>
@@ -418,6 +439,9 @@
     }
 
     function viewCheckin() {
+      const mobBtn = $('#mobile-theme-btn');
+      if (mobBtn) mobBtn.style.display = 'block';
+
       const r = DB.residents.find(x => x.id == S.rid);
       if (!r) return viewHome();
 
@@ -436,7 +460,7 @@
     </div>`;
 
       if (S.step === 2) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="checkin" data-id="${S.rid}" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Apakah Anda memerlukan sesuatu?</h1>
       <p class="text-xl text-slate-500 dark:text-slate-400 mt-2">Bisa pilih lebih dari satu pilihan di bawah.</p>
@@ -461,6 +485,9 @@
     }
 
     function viewWatch() {
+      const mobBtn = $('#mobile-theme-btn');
+      if (mobBtn) mobBtn.style.display = 'block';
+
       const att = DB.residents.filter(r => r.filled && (r.mood === 'sad' || (r.needs && r.needs.length > 0)));
       const pending = DB.residents.filter(r => !r.filled);
 
@@ -526,7 +553,8 @@
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-slate-600 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
+              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>
+              ${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
@@ -549,6 +577,9 @@
     }
 
     function viewManage() {
+      const mobBtn = $('#mobile-theme-btn');
+      if (mobBtn) mobBtn.style.display = 'block';
+
       return `
   <div class="p-5 md:p-10 max-w-3xl mx-auto space-y-8 rise">
     <header>
@@ -620,23 +651,12 @@
           <span class="text-2xl font-bold text-center leading-tight">Ruang<br>Terhubung</span>
         </div>`;
 
-      const themeIcon = isDark ? 'sun' : 'moon';
-      const themeLabel = isDark ? 'Terang' : 'Gelap';
-
       nav.innerHTML = `
         ${brandHeader}
         <div class="flex flex-row md:flex-col w-full gap-1 md:gap-2 px-2 md:px-4">
           ${item('home', 'house', 'Beranda')}
           ${item('watch', 'clipboard-list', 'Pantauan')}
           ${item('manage', 'users', 'Kelola')}
-          
-          <!-- Tombol Tema -->
-          <div class="md:mt-auto md:pt-4 md:border-t md:border-slate-100 md:dark:border-slate-800">
-            <button onclick="toggleTheme()" class="btn w-full flex-1 md:flex-none flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-4 py-3 md:py-4 md:px-6 md:rounded-2xl transition-all text-slate-400 dark:text-slate-500 hover:text-brand-700 dark:hover:text-brand-300 md:hover:bg-slate-50 md:dark:hover:bg-slate-800/50">
-              ${icon(themeIcon, 'w-6 h-6')}
-              <span class="text-[12px] md:text-lg font-semibold">${themeLabel}</span>
-            </button>
-          </div>
         </div>`;
     }
 
@@ -645,6 +665,7 @@
     function render() {
       $('#view').innerHTML = VIEWS[S.view]();
       renderNav();
+      updateMobileThemeIcon();
       if (window.lucide) lucide.createIcons();
     }
 
@@ -671,6 +692,8 @@
           addResident(); break;
         case 'delete':
           deleteResident(id); break;
+        case 'help':
+          toast("Aplikasi ini digunakan untuk mencatat perasaan dan kebutuhan harian lansia secara sederhana.", false, 6000); break;
       }
     });
 
