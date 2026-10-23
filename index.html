@@ -10,7 +10,7 @@
   <!-- Deteksi Error Anti-Blank Putih -->
   <script>
     window.onerror = function (message, source, lineno, colno, error) {
-      document.body.innerHTML = `<div style="padding: 20px; font-family: sans-serif; color: #b91c1c; background: #fee2e2; height: 100vh;">
+      document.body.innerHTML = `<div style="padding: 20px; font-family: sans-serif; color: #b91c1c; background: #fee2e2; min-height: 100vh;">
         <h2 style="margin-top:0;">Terjadi Kesalahan Sistem!</h2>
         <p><b>Pesan:</b> ${message}</p>
         <p><b>Baris:</b> ${lineno}</p>
@@ -38,9 +38,16 @@
     };
   </script>
   <style>
+    /* PERBAIKAN UKURAN: Di HP lebih kecil (14px) agar rapi, di Laptop normal (16px) */
     html {
-      font-size: 19px;
+      font-size: 14px;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    @media (min-width: 768px) {
+      html {
+        font-size: 16px;
+      }
     }
 
     body {
@@ -79,15 +86,17 @@
   </style>
 </head>
 
-<body class="font-sans text-slate-900 antialiased flex h-screen overflow-hidden">
+<!-- PERBAIKAN SCROLL: overflow-hidden & flex h-screen HANYA berlaku di Laptop (md:) -->
 
-  <!-- Navigasi: Bottom Nav di HP, Sidebar di Laptop -->
+<body class="font-sans text-slate-900 antialiased md:flex md:h-screen md:overflow-hidden">
+
+  <!-- Navigasi: Di HP fixed bawah & menyamping (flex-row), di Laptop di kiri & menurun (flex-col) -->
   <nav id="bottom-nav"
-    class="fixed bottom-0 w-full md:static md:w-72 md:h-full bg-white border-t-2 md:border-t-0 md:border-r border-slate-200 shadow-sm z-40 shrink-0 transition-all flex-col">
+    class="fixed bottom-0 left-0 w-full md:static md:w-72 md:h-full bg-white border-t border-slate-200 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-sm z-40 shrink-0 transition-all">
   </nav>
 
-  <!-- Container Utama Konten -->
-  <div id="app" class="flex-1 h-full overflow-y-auto no-scrollbar relative w-full pb-24 md:pb-0">
+  <!-- Container Utama Konten: pb-28 di HP agar bisa di-scroll sampai bawah menu -->
+  <div id="app" class="w-full pb-28 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
     <main id="view" class="h-full"></main>
   </div>
 
@@ -98,16 +107,17 @@
     // 1. KONEKSI KE SUPABASE
     // ==========================================
     const supabaseUrl = 'https://qbqqexduxvoykzhxflps.supabase.co';
-    const supabaseKey = 'sb_publishable_uGEAHL2TB070d6L-pCo-0A_hNjH8my9';
+    const supabaseKey = 'sb_publishable_uGEAHL2TBO70d6L-pCo-0A_hNjH8my9';
 
     if (!window.supabase) throw new Error("Library Supabase gagal dimuat. Pastikan koneksi internet aktif.");
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
-    // 2. STATE & DATA
+    // 2. STATE & DATA (Diperbarui agar mengingat halaman terakhir)
     // ==========================================
     let DB = { residents: [] };
-    const S = { view: 'landing', step: 1, rid: null, mood: null, needs: [] };
+    const savedView = localStorage.getItem('rt_last_view') || 'landing';
+    const S = { view: savedView, step: 1, rid: null, mood: null, needs: [] };
 
     const MOODS = {
       1: { emoji: '😢', label: 'Sedih', color: '#b91c1c', soft: '#fee2e2' },
@@ -128,12 +138,12 @@
     const icon = (name, cls = 'w-7 h-7') => `<i data-lucide="${name}" class="${cls}"></i>`;
     const avatar = (name) => `<div class="w-14 h-14 shrink-0 rounded-full bg-brand-700 text-white text-2xl font-bold flex items-center justify-center">${name ? name[0].toUpperCase() : '?'}</div>`;
 
-    function toast(msg) {
+    function toast(msg, isError = false) {
       const el = document.createElement('div');
-      el.className = `fixed top-10 md:top-6 left-1/2 md:left-auto md:right-6 -translate-x-1/2 md:translate-x-0 z-[100] rise bg-slate-900 text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
+      el.className = `fixed top-10 md:top-6 left-1/2 md:left-auto md:right-6 -translate-x-1/2 md:translate-x-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-900'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
       el.textContent = msg;
       $('#toast-root').appendChild(el);
-      setTimeout(() => el.remove(), 3000);
+      setTimeout(() => el.remove(), 4000);
     }
 
     // ==========================================
@@ -142,7 +152,13 @@
     async function loadData() {
       try {
         const { data, error } = await supabaseClient.from('residents').select('*').order('id', { ascending: true });
-        if (error) throw error;
+
+        // Peringatan jika Supabase terkunci RLS
+        if (error) {
+          toast("Database Terkunci! Matikan fitur RLS di menu SQL Supabase Anda.", true);
+          throw error;
+        }
+
         if (data) {
           DB.residents = data;
           if (S.view !== 'landing') render();
@@ -184,13 +200,16 @@
 
       const defaultHistory = ['happy', 'neutral', 'happy', 'happy', 'neutral', 'happy', null];
 
-      await supabaseClient.from('residents').insert([{
+      const { error } = await supabaseClient.from('residents').insert([{
         name,
         room,
         filled: false,
         needs: [],
         history: defaultHistory
       }]);
+
+      if (error) return toast("Gagal menyimpan. Pastikan RLS Supabase sudah dimatikan.", true);
+
       toast(`${name} ditambahkan!`);
 
       $('#a-name').value = '';
@@ -271,7 +290,7 @@
       <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         ${NEEDS.map(n => {
         const on = S.needs.includes(n.label); return `
-        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border-4 text-xl font-bold flex items-center gap-4 px-6 text-left transition-colors ${on ? 'bg-brand-700 border-brand-900 text-white shadow-md' : 'bg-white border-transparent hover:border-brand-200 shadow-sm'}">
+        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border-4 text-xl font-bold flex items-center gap-4 px-6 text-left transition-colors ${on ? 'bg-brand-700 border-brand-900 text-white shadow-md' : 'bg-white border-slate-300 hover:border-brand-200 shadow-sm'}">
           <span class="text-4xl md:text-5xl">${n.emoji}</span><span class="flex-1">${n.label}</span>
         </button>`;
       }).join('')}
@@ -393,7 +412,7 @@
           <label class="block text-slate-600 font-bold mb-2">Kamar (Opsional)</label>
           <input id="a-room" placeholder="Contoh: Melati 03" class="w-full border-2 border-slate-200 focus:border-brand-500 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 focus:bg-white">
         </div>
-        <button data-a="add" class="btn w-full bg-brand-700 hover:bg-brand-800 text-white py-4 mt-4 rounded-xl font-bold text-xl shadow-md">Simpan ke Database</button>
+        <button data-a="add" class="btn w-full bg-brand-700 hover:bg-brand-800 text-white py-4 mt-4 rounded-xl font-bold text-xl shadow-md">Simpan</button>
       </div>
     </section>
   </div>`;
@@ -410,9 +429,7 @@
         return;
       }
 
-      // PERBAIKAN: Menggunakan display block agar sidebar bertumpuk ke bawah (bukan ke samping)
       nav.style.display = 'block';
-
       const isActive = (v) => S.view === v;
 
       const item = (v, ic, label) => `
@@ -448,13 +465,35 @@
       const el = e.target.closest('[data-a]'); if (!el) return;
       const { a, id, v } = el.dataset;
       switch (a) {
-        case 'nav': S.view = v; loadData(); render(); $('#app').scrollTo(0, 0); break;
-        case 'start': S.view = 'checkin'; S.step = 1; S.rid = id; S.mood = null; S.needs = []; render(); $('#app').scrollTo(0, 0); break;
-        case 'back': S.step = 1; render(); $('#app').scrollTo(0, 0); break;
-        case 'mood': S.mood = +v; S.step = 2; render(); $('#app').scrollTo(0, 0); break;
-        case 'need': S.needs.includes(id) ? S.needs = S.needs.filter(x => x !== id) : S.needs.push(id); render(); break;
-        case 'finish': finishCheckin(); break;
-        case 'add': addResident(); break;
+        case 'nav':
+          S.view = v;
+          localStorage.setItem('rt_last_view', v); // Menyimpan halaman terakhir
+          loadData(); render(); window.scrollTo(0, 0);
+          break;
+        case 'start':
+          S.view = 'checkin';
+          localStorage.setItem('rt_last_view', 'checkin'); // Menyimpan saat mulai form
+          S.step = 1; S.rid = id; S.mood = null; S.needs = [];
+          render(); window.scrollTo(0, 0);
+          break;
+        case 'back':
+          S.step = 1;
+          render(); window.scrollTo(0, 0);
+          break;
+        case 'mood':
+          S.mood = +v; S.step = 2;
+          render(); window.scrollTo(0, 0);
+          break;
+        case 'need':
+          S.needs.includes(id) ? S.needs = S.needs.filter(x => x !== id) : S.needs.push(id);
+          render();
+          break;
+        case 'finish':
+          finishCheckin();
+          break;
+        case 'add':
+          addResident();
+          break;
       }
     });
 
