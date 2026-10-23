@@ -4,21 +4,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <!-- Mengubah warna tema status bar HP agar sesuai dengan Blue Gray -->
-  <meta name="theme-color" content="#4e7ba6" />
+  <meta name="theme-color" content="#fafafa" />
   <title>RuangTerhubung — Check-in Perasaan Lansia</title>
 
-  <!-- Deteksi Error Anti-Blank Putih (DIPERBARUI ANTI ERROR PALSU WA/IG) -->
+  <!-- Deteksi Error Anti-Blank Putih -->
   <script>
     window.onerror = function (message, source, lineno, colno, error) {
-      // Abaikan error palsu "Script error" baris 0 yang berasal dari in-app browser (WA/IG/Line)
       if (message.toLowerCase().includes("script error") && lineno === 0) return true;
-
       document.body.innerHTML = `<div style="padding: 20px; font-family: sans-serif; color: #b91c1c; background: #fee2e2; min-height: 100vh;">
         <h2 style="margin-top:0;">Terjadi Kesalahan Sistem!</h2>
         <p><b>Pesan:</b> ${message}</p>
         <p><b>Baris:</b> ${lineno}</p>
-        <p>Saran: Buka link ini menggunakan browser utama (seperti Chrome atau Safari), bukan dari dalam aplikasi chat.</p>
       </div>`;
     };
   </script>
@@ -32,23 +28,28 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // PERBAIKAN WARNA TEMA: Menyesuaikan dengan palet Light Blue & Blue Gray
+    // PERBAIKAN WARNA TEMA: Menyesuaikan dengan palet referensi minimalis
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: { sans: ['"Atkinson Hyperlegible"', 'sans-serif'] },
           colors: {
             brand: {
-              50: '#f0f8ff',   // Latar belakang sangat terang
-              100: '#dcebf5',  // Aksen terang
-              200: '#a3d1e6',  // Light Blue (Sesuai Gambar)
-              300: '#8ebfda',
-              400: '#7aaed0',
-              500: '#6998c5',  // Blue Gray (Sesuai Gambar)
-              600: '#5c8ab5',
-              700: '#4e7ba6',  // Blue Gray Utama untuk tombol dan teks agar kontras
-              800: '#3f678e',  // Warna saat tombol ditekan / hover
-              900: '#325475'   // Border warna gelap
+              50: '#f6f9f7',
+              100: '#eef4f0',
+              200: '#d7e4db',
+              300: '#b6ccc1',
+              400: '#90a99c',
+              500: '#6c8879',
+              600: '#526c5d',
+              700: '#2f483c',  // Hijau Gelap Utama
+              800: '#263a30',
+              900: '#203028'
+            },
+            cream: {
+              main: '#fafafa', // Background Krem Hangat Pudar (sesuai referensi baru)
+              menu: '#f5f7f5'
             }
           }
         }
@@ -56,7 +57,6 @@
     };
   </script>
   <style>
-    /* PERBAIKAN UKURAN: Di HP lebih kecil (14px) agar rapi, di Laptop normal (16px) */
     html {
       font-size: 14px;
       -webkit-tap-highlight-color: transparent;
@@ -69,7 +69,7 @@
     }
 
     body {
-      background: #f8fafc;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .btn:active {
@@ -78,13 +78,13 @@
     }
 
     .rise {
-      animation: rise .35s ease both;
+      animation: rise .4s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
     @keyframes rise {
       from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(15px);
       }
 
       to {
@@ -102,7 +102,6 @@
       scrollbar-width: none;
     }
 
-    /* Animasi Pop-up Modal */
     .modal-fade-in {
       animation: fadeIn 0.2s ease-out forwards;
     }
@@ -135,23 +134,46 @@
   </style>
 </head>
 
-<body class="font-sans text-slate-900 antialiased md:flex md:h-screen md:overflow-hidden">
+<body
+  class="font-sans text-slate-900 bg-cream-main dark:bg-[#1e293b] dark:text-slate-100 antialiased md:flex md:h-screen md:overflow-hidden transition-colors">
 
-  <!-- Navigasi: Di HP fixed bawah & menyamping, di Laptop di kiri & menurun -->
+  <!-- Navigasi -->
   <nav id="bottom-nav"
-    class="fixed bottom-0 left-0 w-full md:static md:w-72 md:h-full bg-white border-t border-slate-200 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-sm z-40 shrink-0 transition-all">
+    class="fixed bottom-0 left-0 w-full md:static md:w-72 md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all">
   </nav>
 
   <!-- Container Utama Konten -->
-  <div id="app" class="w-full pb-28 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
+  <div id="app"
+    class="w-full pb-28 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative transition-colors">
     <main id="view" class="h-full"></main>
   </div>
 
-  <!-- Tempat untuk Modal Detail -->
+  <!-- Modal & Toast -->
   <div id="modal-root"></div>
   <div id="toast-root"></div>
 
   <script>
+    // Inisialisasi Dark Mode dari LocalStorage
+    let isDark = localStorage.getItem('rt_theme') === 'dark';
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.querySelector('meta[name="theme-color"]').setAttribute("content", "#0f172a");
+    }
+
+    function toggleTheme() {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('rt_theme', 'dark');
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", "#0f172a");
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('rt_theme', 'light');
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", "#fafafa");
+      }
+      renderNav();
+    }
+
     // ==========================================
     // 1. KONEKSI KE SUPABASE
     // ==========================================
@@ -162,87 +184,73 @@
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // ==========================================
-    // 2. STATE & DATA (Menggunakan sessionStorage)
+    // 2. STATE & DATA
     // ==========================================
     let DB = { residents: [] };
-    // PERBAIKAN: Menggunakan sessionStorage agar jika tab ditutup, kembali ke landing
     const savedView = sessionStorage.getItem('rt_last_view') || 'landing';
     const S = { view: savedView, step: 1, rid: null, mood: null, needs: [] };
 
+    // PERBAIKAN: Mengganti semua emoji dengan Icon Lucide & Menyesuaikan warna yang tidak menabrak dark mode
     const MOODS = {
-      1: { emoji: '😢', label: 'Sedih', color: '#b91c1c', soft: '#fee2e2' },
-      2: { emoji: '🙂', label: 'Biasa saja', color: '#a16207', soft: '#fef3c7' },
-      3: { emoji: '😊', label: 'Senang', color: '#047857', soft: '#d1fae5' }
+      1: { icon: 'frown', label: 'Sedih', color: '#ef4444' }, // Red
+      2: { icon: 'meh', label: 'Biasa saja', color: '#f59e0b' }, // Amber
+      3: { icon: 'smile', label: 'Senang', color: '#10b981' } // Emerald
     };
 
     const NEEDS = [
-      { id: 'ngobrol', emoji: '💬', label: 'Ditemani ngobrol' },
-      { id: 'keluarga', emoji: '📞', label: 'Menghubungi keluarga' },
-      { id: 'ibadah', emoji: '🙏', label: 'Beribadah' },
-      { id: 'jalan', emoji: '🌿', label: 'Jalan-jalan' },
-      { id: 'kegiatan', emoji: '🎨', label: 'Ikut kegiatan' },
-      { id: 'sepi', emoji: '😞', label: 'Merasa kesepian' }
+      { id: 'ngobrol', icon: 'message-circle', label: 'Ditemani ngobrol' },
+      { id: 'keluarga', icon: 'phone', label: 'Menghubungi keluarga' },
+      { id: 'ibadah', icon: 'heart', label: 'Beribadah' },
+      { id: 'jalan', icon: 'footprints', label: 'Jalan-jalan' },
+      { id: 'kegiatan', icon: 'palette', label: 'Ikut kegiatan' },
+      { id: 'sepi', icon: 'user-minus', label: 'Merasa kesepian' }
     ];
 
     const $ = s => document.querySelector(s);
     const icon = (name, cls = 'w-7 h-7') => `<i data-lucide="${name}" class="${cls}"></i>`;
-    const avatar = (name) => `<div class="w-14 h-14 shrink-0 rounded-full bg-brand-700 text-white text-2xl font-bold flex items-center justify-center">${name ? name[0].toUpperCase() : '?'}</div>`;
+    const avatar = (name) => `<div class="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full bg-brand-800 dark:bg-brand-600 text-white text-xl md:text-2xl font-bold flex items-center justify-center">${name ? name[0].toUpperCase() : '?'}</div>`;
 
-    // PERBAIKAN POP-UP TOAST AGAR SELALU PAS DI HP
     function toast(msg, isError = false) {
       const el = document.createElement('div');
-      el.className = `fixed top-10 md:top-6 left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-900'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
+      el.className = `fixed top-10 md:top-6 left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-800'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
       el.textContent = msg;
       $('#toast-root').appendChild(el);
       setTimeout(() => el.remove(), 4000);
     }
 
-    function closeDetail() {
-      $('#modal-root').innerHTML = '';
-    }
+    function closeDetail() { $('#modal-root').innerHTML = ''; }
 
     function openDetail(id) {
       const r = DB.residents.find(x => x.id == id);
       if (!r) return;
 
-      const moodUI = {
-        'sad': { emoji: '😢', label: 'Sedih', color: '#b91c1c', soft: '#fee2e2' },
-        'neutral': { emoji: '🙂', label: 'Biasa saja', color: '#a16207', soft: '#fef3c7' },
-        'happy': { emoji: '😊', label: 'Senang', color: '#047857', soft: '#d1fae5' }
-      };
-
-      const m = moodUI[r.mood];
+      const m = (r.mood === 'sad') ? MOODS[1] : (r.mood === 'neutral') ? MOODS[2] : (r.mood === 'happy') ? MOODS[3] : null;
       const isFilled = r.filled && m;
 
       $('#modal-root').innerHTML = `
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <!-- Backdrop -->
-          <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm modal-fade-in" onclick="closeDetail()"></div>
-          
-          <!-- Modal Card -->
-          <div class="relative bg-white rounded-3xl w-full max-w-md shadow-2xl modal-slide-up overflow-hidden">
-            <!-- Header Modal -->
-            <div class="bg-slate-50 border-b border-slate-100 p-5 flex items-center justify-between">
-              <h3 class="font-bold text-xl text-slate-800">Detail Lansia</h3>
-              <button onclick="closeDetail()" class="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">${icon('x', 'w-6 h-6')}</button>
+          <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm modal-fade-in" onclick="closeDetail()"></div>
+          <div class="relative bg-white dark:bg-slate-800 rounded-3xl w-full max-w-md shadow-2xl modal-slide-up overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700 p-5 flex items-center justify-between">
+              <h3 class="font-bold text-xl text-slate-800 dark:text-white flex items-center gap-2">${icon('file-text', 'w-5 h-5')} Detail Lansia</h3>
+              <button onclick="closeDetail()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 dark:text-slate-400">${icon('x', 'w-6 h-6')}</button>
             </div>
             
-            <!-- Body Modal -->
             <div class="p-6 space-y-6">
               <div class="flex items-center gap-4">
                 ${avatar(r.name)}
                 <div>
-                  <p class="text-2xl font-bold text-slate-800">${r.name}</p>
-                  <p class="text-slate-500 font-medium">${r.room || 'Kamar Tidak Diketahui'}</p>
+                  <p class="text-2xl font-bold text-slate-800 dark:text-white">${r.name}</p>
+                  <p class="text-slate-500 dark:text-slate-400 font-medium">${r.room || 'Kamar Tidak Diketahui'}</p>
                 </div>
               </div>
 
-              <div class="border-t border-slate-100 pt-5">
-                <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Status Hari Ini</p>
+              <div class="border-t border-slate-100 dark:border-slate-700 pt-5">
+                <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">${icon('activity', 'w-4 h-4')} Status Hari Ini</p>
                 
                 ${isFilled ? `
-                  <div class="rounded-2xl p-4 flex items-center gap-4 mb-4" style="background:${m.soft}">
-                    <span class="text-4xl drop-shadow-sm">${m.emoji}</span>
+                  <div class="rounded-2xl p-4 flex items-center gap-4 mb-4 border-2" style="background:transparent; border-color:${m.color}">
+                    <span class="drop-shadow-sm" style="color:${m.color}">${icon(m.icon, 'w-10 h-10')}</span>
                     <div>
                       <p class="font-bold text-lg" style="color:${m.color}">${m.label}</p>
                       <p class="text-sm opacity-80" style="color:${m.color}">Diperbarui pukul ${r.time}</p>
@@ -250,17 +258,17 @@
                   </div>
                   
                   ${r.needs && r.needs.length > 0 ? `
-                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Yang Dibutuhkan:</p>
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">${icon('list', 'w-4 h-4')} Yang Dibutuhkan:</p>
                     <ul class="space-y-2">
-                      ${r.needs.map(n => `<li class="flex items-center gap-2 text-slate-700 font-medium"><div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div>${n}</li>`).join('')}
+                      ${r.needs.map(n => `<li class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div>${n}</li>`).join('')}
                     </ul>
                   ` : `
-                    <p class="text-slate-500 italic">Tidak ada kebutuhan khusus yang diminta hari ini.</p>
+                    <p class="text-slate-500 dark:text-slate-400 italic">Tidak ada kebutuhan khusus yang diminta hari ini.</p>
                   `}
                 ` : `
-                  <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-center">
-                    <span class="text-3xl mb-2 block">⏳</span>
-                    <p class="text-slate-500 font-medium">Lansia ini belum mengisi form atau belum dipantau hari ini.</p>
+                  <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 text-center flex flex-col items-center">
+                    <span class="text-slate-400 mb-2 block">${icon('hourglass', 'w-10 h-10')}</span>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium">Belum mengisi form hari ini.</p>
                   </div>
                 `}
               </div>
@@ -271,32 +279,19 @@
       if (window.lucide) lucide.createIcons();
     }
 
-
     // ==========================================
-    // 3. FUNGSI DATABASE (DIOPTIMASI ANTI-LAG)
+    // 3. FUNGSI DATABASE
     // ==========================================
     async function loadData() {
       try {
         const { data, error } = await supabaseClient.from('residents').select('*').order('id', { ascending: true });
-
-        if (error) {
-          toast("Database Terkunci! Matikan fitur RLS di menu SQL Supabase Anda.", true);
-          throw error;
-        }
-
+        if (error) { toast("Database Terkunci! Matikan fitur RLS.", true); throw error; }
         if (data) {
-          // Hanya render ulang halaman jika ada perubahan data sungguhan di database.
-          // Ini yang menghilangkan sensasi lag/crash/berkedip saat pindah halaman.
           const isChanged = JSON.stringify(DB.residents) !== JSON.stringify(data);
           DB.residents = data;
-
-          if (isChanged && S.view !== 'landing') {
-            render();
-          }
+          if (isChanged && S.view !== 'landing') render();
         }
-      } catch (err) {
-        console.error("Gagal memuat data:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     async function finishCheckin() {
@@ -305,28 +300,12 @@
       const moodName = S.mood === 1 ? 'sad' : S.mood === 2 ? 'neutral' : 'happy';
 
       const r = DB.residents.find(x => x.id == S.rid);
+      let updatedHistory = Array.isArray(r.history) && r.history.length === 7 ? [...r.history] : [null, null, null, null, null, null, null];
 
-      // LOGIKA BERGULIR 7 HARI (Rolling First-In First-Out) dengan default kosong
-      let updatedHistory = Array.isArray(r.history) && r.history.length === 7
-        ? [...r.history]
-        : [null, null, null, null, null, null, null];
+      if (!r.filled) { updatedHistory.shift(); updatedHistory.push(moodName); }
+      else { updatedHistory[6] = moodName; }
 
-      if (!r.filled) {
-        // Jika form baru diisi hari ini: Geser semua data ke kiri
-        updatedHistory.shift();
-        updatedHistory.push(moodName);
-      } else {
-        // Jika sekadar ganti pilihan di hari yang sama: Timpa data paling ujung kanan
-        updatedHistory[6] = moodName;
-      }
-
-      await supabaseClient.from('residents').update({
-        filled: true,
-        time: timeStr,
-        mood: moodName,
-        needs: S.needs,
-        history: updatedHistory
-      }).eq('id', S.rid);
+      await supabaseClient.from('residents').update({ filled: true, time: timeStr, mood: moodName, needs: S.needs, history: updatedHistory }).eq('id', S.rid);
 
       S.step = 3;
       render();
@@ -339,23 +318,22 @@
       const room = $('#a-room').value.trim();
       if (!name) return toast('Mohon isi nama dulu');
 
-      // PERBAIKAN: Lansia baru dibuat dengan riwayat 7 hari murni kosong
       const defaultHistory = [null, null, null, null, null, null, null];
+      const { error } = await supabaseClient.from('residents').insert([{ name, room, filled: false, needs: [], history: defaultHistory }]);
 
-      const { error } = await supabaseClient.from('residents').insert([{
-        name,
-        room,
-        filled: false,
-        needs: [],
-        history: defaultHistory
-      }]);
-
-      if (error) return toast("Gagal menyimpan. Pastikan RLS Supabase sudah dimatikan.", true);
-
+      if (error) return toast("Gagal menyimpan.", true);
       toast(`${name} ditambahkan!`);
+      $('#a-name').value = ''; $('#a-room').value = '';
+      loadData();
+    }
 
-      $('#a-name').value = '';
-      $('#a-room').value = '';
+    async function deleteResident(id) {
+      if (!confirm("Yakin ingin menghapus nama lansia ini? Semua riwayatnya akan ikut terhapus.")) return;
+
+      const { error } = await supabaseClient.from('residents').delete().eq('id', id);
+      if (error) return toast("Gagal menghapus data.", true);
+
+      toast("Data berhasil dihapus.");
       loadData();
     }
 
@@ -365,11 +343,38 @@
 
     function viewLanding() {
       return `
-  <div class="fixed inset-0 bg-brand-700 flex flex-col items-center justify-center text-white px-6 text-center z-50">
-    <div class="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-6 rise">${icon('heart-handshake', 'w-12 h-12 text-white')}</div>
-    <h1 class="text-4xl md:text-6xl font-bold mb-3 rise">RuangTerhubung</h1>
-    <p class="text-xl md:text-2xl text-brand-100 mb-10 max-w-lg mx-auto rise">Sistem pantauan emosional harian lansia.</p>
-    <button data-a="nav" data-v="home" class="btn w-full max-w-md min-h-[68px] rounded-2xl text-xl font-bold bg-white text-brand-800 shadow-xl rise hover:scale-105 transition-transform">Masuk ke Aplikasi</button>
+  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-50 transition-colors duration-300">
+    <div class="flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
+      <div class="flex items-center gap-3 text-slate-800 dark:text-white font-bold text-xl md:text-2xl">
+        <div class="bg-brand-50 dark:bg-brand-900/50 p-2 rounded-full rounded-tr-none">
+          ${icon('leaf', 'w-6 h-6 md:w-8 md:h-8 text-brand-700 dark:text-brand-300 fill-current')}
+        </div>
+        <span class="leading-tight">Teman<br>Rasa</span>
+      </div>
+      <button class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
+        <span class="bg-slate-700 dark:bg-slate-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">?</span> Bantuan
+      </button>
+    </div>
+
+    <div class="flex-1 flex flex-col justify-center px-8 w-full max-w-5xl mx-auto relative rise mt-10 md:mt-0">
+      <div class="max-w-[320px] md:max-w-xl z-20">
+        <h1 class="text-[48px] md:text-7xl font-extrabold leading-[1.1] text-brand-800 dark:text-white mb-6 tracking-tight">
+          Hai,<br>Bagaimana<br>perasaan Anda<br>hari ini?
+        </h1>
+        <p class="text-lg md:text-2xl text-slate-700 dark:text-slate-300 mb-12 opacity-90 leading-relaxed font-medium">
+          Yuk, ceritakan perasaan Anda secara sederhana. Ini hanya untuk mengetahui keadaan emosi Anda saat ini.
+        </p>
+      </div>
+      <div class="absolute right-4 bottom-0 md:bottom-10 md:right-10 text-brand-200 dark:text-slate-800 opacity-60 z-10 hover:scale-105 transition-transform duration-500">
+        ${icon('users', 'w-[200px] h-[200px] md:w-[350px] md:h-[350px]')}
+      </div>
+    </div>
+
+    <div class="p-6 md:p-10 w-full max-w-5xl mx-auto pb-12 z-20">
+      <button data-a="nav" data-v="home" class="w-full bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500 text-white rounded-full py-5 md:py-6 text-xl md:text-2xl font-bold flex justify-center items-center gap-3 shadow-[0_10px_30px_rgba(47,72,60,0.3)] hover:shadow-[0_15px_40px_rgba(47,72,60,0.4)] rise transition-all">
+        Mulai Cek Emosi ${icon('arrow-right', 'w-7 h-7 md:w-8 md:h-8')}
+      </button>
+    </div>
   </div>`;
     }
 
@@ -378,33 +383,34 @@
       return `
   <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-8 rise">
     <header>
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Selamat datang! 👋</h1>
-      <p class="text-lg text-slate-500 mt-2">Pilih nama Anda untuk mulai check-in hari ini.</p>
+      <!-- PERBAIKAN: Emoji tangan diganti dengan Icon Lucide -->
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white flex items-center gap-3">Selamat datang!👋</h1>
+      <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Pilih nama Anda untuk mulai check-in hari ini.</p>
     </header>
 
-    <div class="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4 shadow-sm">
-      <span class="text-4xl">📋</span>
+    <div class="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex items-center gap-4 shadow-sm">
+      <span class="text-brand-600 dark:text-brand-400">${icon('clipboard-list', 'w-10 h-10')}</span>
       <div>
-        <p class="text-xl font-bold text-slate-800">${done} dari ${DB.residents.length}</p>
-        <p class="text-base text-slate-500">Orang sudah mengisi hari ini</p>
+        <p class="text-xl font-bold text-slate-800 dark:text-white">${done} dari ${DB.residents.length}</p>
+        <p class="text-base text-slate-500 dark:text-slate-400">Orang sudah mengisi hari ini</p>
       </div>
     </div>
 
     <section>
       <div class="mb-5">
-        <h2 class="text-xl font-bold text-slate-800">Daftar Lansia</h2>
-        <p class="text-sm text-brand-700 font-medium mt-1 bg-brand-50 inline-block px-3 py-1 rounded-lg">👉 Klik nama lansia di bawah ini untuk mengisi / memantau</p>
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white">Daftar Lansia</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1 flex items-center gap-2">${icon('mouse-pointer-click', 'w-4 h-4')} Klik nama lansia di bawah ini</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${DB.residents.map(r => `
-        <button data-a="start" data-id="${r.id}" class="btn w-full text-left bg-white rounded-2xl border-2 ${r.filled ? 'border-emerald-400 shadow-emerald-50' : 'border-slate-200 hover:border-brand-400'} p-4 flex items-center gap-4 hover:shadow-md transition-all">
+        <button data-a="start" data-id="${r.id}" class="btn w-full text-left bg-white dark:bg-[#0f172a] rounded-2xl border ${r.filled ? 'border-brand-400 dark:border-brand-500' : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-slate-500'} p-4 flex items-center gap-4 hover:shadow-md transition-all">
           ${avatar(r.name)}
           <span class="flex-1 min-w-0">
-            <span class="block text-xl font-bold truncate">${r.name}</span>
-            <span class="block text-base ${r.filled ? 'text-emerald-700 font-medium' : 'text-slate-400'}">${r.filled ? 'Sudah mengisi (' + (r.time || '') + ')' : 'Belum mengisi'}</span>
+            <span class="block text-xl font-bold truncate text-slate-800 dark:text-white">${r.name}</span>
+            <span class="block text-sm mt-1 ${r.filled ? 'text-brand-700 dark:text-brand-400 font-medium' : 'text-slate-400 dark:text-slate-500'}">${r.filled ? 'Sudah mengisi (' + (r.time || '') + ')' : 'Belum mengisi'}</span>
           </span>
-          ${icon('chevron-right', 'w-7 h-7 text-slate-300')}
+          ${icon('chevron-right', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
         </button>`).join('')}
       </div>
     </section>
@@ -416,39 +422,40 @@
       if (!r) return viewHome();
 
       if (S.step === 1) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="home" class="btn bg-white border border-slate-300 px-5 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="home" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
-      <h1 class="text-3xl md:text-5xl font-bold leading-tight text-slate-800">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700">Bagaimana perasaan Anda hari ini?</span></h1>
+      <h1 class="text-3xl md:text-5xl font-extrabold leading-tight text-slate-800 dark:text-white">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700 dark:text-brand-400">Bagaimana perasaan Anda hari ini?</span></h1>
       <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        ${[3, 2, 1].map(k => `
-        <button data-a="mood" data-v="${k}" class="btn w-full min-h-[140px] md:min-h-[220px] rounded-3xl border-4 flex flex-row md:flex-col justify-center items-center gap-5 px-6 hover:shadow-xl transition-all" style="background:${MOODS[k].soft};border-color:${MOODS[k].color}">
-          <span class="text-7xl md:text-[100px]">${MOODS[k].emoji}</span>
+        ${[3, 2, 1].map(k => {
+        return `
+        <button data-a="mood" data-v="${k}" class="btn w-full min-h-[140px] md:min-h-[220px] rounded-3xl border-2 flex flex-row md:flex-col justify-center items-center gap-5 px-6 hover:shadow-xl transition-all bg-white dark:bg-[#0f172a]" style="border-color:${MOODS[k].color}">
+          <span style="color:${MOODS[k].color}">${icon(MOODS[k].icon, 'w-16 h-16 md:w-24 md:h-24')}</span>
           <span class="text-3xl md:text-4xl font-bold" style="color:${MOODS[k].color}">${MOODS[k].label}</span>
-        </button>`).join('')}
+        </button>`}).join('')}
       </div>
     </div>`;
 
       if (S.step === 2) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white border border-slate-300 px-5 py-2.5 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Apakah Anda memerlukan sesuatu?</h1>
-      <p class="text-xl text-slate-500 mt-2">Bisa pilih lebih dari satu pilihan di bawah.</p>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Apakah Anda memerlukan sesuatu?</h1>
+      <p class="text-xl text-slate-500 dark:text-slate-400 mt-2">Bisa pilih lebih dari satu pilihan di bawah.</p>
       <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         ${NEEDS.map(n => {
         const on = S.needs.includes(n.label); return `
-        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border-4 text-xl font-bold flex items-center gap-4 px-6 text-left transition-colors ${on ? 'bg-brand-700 border-brand-900 text-white shadow-md' : 'bg-white border-slate-300 hover:border-brand-200 shadow-sm'}">
-          <span class="text-4xl md:text-5xl">${n.emoji}</span><span class="flex-1">${n.label}</span>
+        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border-2 text-xl font-bold flex items-center gap-4 px-6 text-left transition-colors ${on ? 'bg-brand-700 border-brand-900 text-white shadow-md' : 'bg-white dark:bg-[#0f172a] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-300 shadow-sm'}">
+          <span class="${on ? 'text-white' : 'text-brand-600 dark:text-brand-400'}">${icon(n.icon, 'w-8 h-8')}</span><span class="flex-1">${n.label}</span>
         </button>`;
       }).join('')}
       </div>
-      <button data-a="finish" class="btn mt-10 w-full md:max-w-md mx-auto block min-h-[72px] rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-2xl font-bold shadow-lg">Kirim Laporan</button>
+      <button data-a="finish" class="btn mt-10 w-full md:max-w-md mx-auto block min-h-[72px] rounded-2xl bg-brand-700 hover:bg-brand-800 text-white text-2xl font-bold shadow-lg">Kirim Laporan</button>
     </div>`;
 
       return `
-    <div class="px-5 pt-24 text-center rise max-w-2xl mx-auto">
-      <div class="text-8xl md:text-[140px] drop-shadow-md">${MOODS[S.mood].emoji}</div>
-      <h1 class="text-4xl md:text-5xl font-bold mt-8 text-slate-800">Terima kasih!</h1>
-      <p class="text-xl md:text-2xl mt-4 text-slate-600">Laporan Anda sudah tersimpan di sistem.</p>
+    <div class="px-5 pt-24 text-center rise max-w-2xl mx-auto flex flex-col items-center">
+      <div class="flex justify-center mb-6" style="color:${MOODS[S.mood].color}">${icon(MOODS[S.mood].icon, 'w-32 h-32 md:w-48 md:h-48 drop-shadow-md')}</div>
+      <h1 class="text-4xl md:text-5xl font-extrabold mt-8 text-slate-800 dark:text-white">Terima kasih!</h1>
+      <p class="text-xl md:text-2xl mt-4 text-slate-600 dark:text-slate-400">Laporan Anda sudah tersimpan di sistem.</p>
       <button data-a="nav" data-v="home" class="btn mt-12 w-full max-w-sm mx-auto flex justify-center items-center min-h-[72px] rounded-2xl bg-brand-700 hover:bg-brand-800 text-white text-xl font-bold shadow-xl">Kembali ke Beranda</button>
     </div>`;
     }
@@ -458,9 +465,9 @@
       const pending = DB.residents.filter(r => !r.filled);
 
       const moodUI = {
-        'sad': { emoji: '😢', label: 'Sedih', color: '#b91c1c', soft: '#fee2e2' },
-        'neutral': { emoji: '🙂', label: 'Biasa saja', color: '#a16207', soft: '#fef3c7' },
-        'happy': { emoji: '😊', label: 'Senang', color: '#047857', soft: '#d1fae5' }
+        'sad': { icon: 'frown', label: 'Sedih', color: '#ef4444' },
+        'neutral': { icon: 'meh', label: 'Biasa saja', color: '#f59e0b' },
+        'happy': { icon: 'smile', label: 'Senang', color: '#10b981' }
       };
 
       const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -472,69 +479,65 @@
       return `
   <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-10 rise">
     <header>
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Pantauan Pengasuh</h1>
-      <p class="text-lg text-slate-500 mt-2">Ringkasan kondisi dan kebutuhan lansia hari ini.</p>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Pantauan Pengasuh</h1>
+      <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Ringkasan kondisi dan kebutuhan lansia hari ini.</p>
     </header>
 
     <section>
-      <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-5 flex items-center gap-2">🔔 Perlu Diperhatikan</h2>
+      <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('bell', 'w-6 h-6 text-amber-500 fill-current')} Perlu Diperhatikan</h2>
       ${att.length ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-5">${att.map(r => {
         const m = moodUI[r.mood] || moodUI['neutral'];
         return `
-        <div class="rounded-3xl border-4 p-6 bg-white shadow-sm flex flex-col" style="border-color:${m.color}">
-          <div class="flex items-center gap-4 border-b border-slate-100 pb-5 mb-5">
+        <div class="rounded-3xl border-2 p-6 bg-white dark:bg-[#0f172a] shadow-sm flex flex-col" style="border-color:${m.color}">
+          <div class="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-5 mb-5">
             ${avatar(r.name)}
             <div class="flex-1 min-w-0">
-              <p class="text-xl font-bold truncate text-slate-800">${r.name}</p>
-              <p class="text-base text-slate-500">Kamar ${r.room || '-'}</p>
+              <p class="text-xl font-bold truncate text-slate-800 dark:text-white">${r.name}</p>
+              <p class="text-base text-slate-500 dark:text-slate-400">Kamar ${r.room || '-'}</p>
             </div>
-            <span class="text-5xl md:text-6xl drop-shadow-sm">${m.emoji}</span>
+            <span class="drop-shadow-sm" style="color:${m.color}">${icon(m.icon, 'w-12 h-12 md:w-14 md:h-14')}</span>
           </div>
           <p class="text-xl font-bold" style="color:${m.color}">${m.label}</p>
-          ${r.needs && r.needs.length ? `<ul class="mt-4 space-y-3 flex-1">${r.needs.map(n => `<li class="text-lg text-slate-700 flex items-start gap-2"><span class="mt-1 text-slate-400">▪</span> <span>${n}</span></li>`).join('')}</ul>` : ''}
+          ${r.needs && r.needs.length ? `<ul class="mt-4 space-y-3 flex-1">${r.needs.map(n => `<li class="text-lg text-slate-700 dark:text-slate-300 flex items-start gap-2"><span class="mt-1 text-slate-400">▪</span> <span>${n}</span></li>`).join('')}</ul>` : ''}
         </div>`;
       }).join('')}</div>`
-          : `<div class="bg-emerald-50 text-emerald-800 border-2 border-emerald-200 rounded-2xl p-6 text-xl font-bold shadow-sm">✅ Semua lansia dalam keadaan baik hari ini.</div>`}
+          : `<div class="bg-white dark:bg-[#0f172a] text-brand-800 dark:text-emerald-400 border border-slate-200 dark:border-emerald-900/50 rounded-2xl p-6 text-xl font-bold shadow-sm flex items-center gap-3">${icon('check-circle', 'w-8 h-8')} Semua lansia dalam keadaan baik hari ini.</div>`}
     </section>
 
     <section>
-      <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-5 flex items-center gap-2">⏳ Belum Mengisi</h2>
+      <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('hourglass', 'w-6 h-6 text-brand-500')} Belum Mengisi</h2>
       ${pending.length ? `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${pending.map(r => `
-        <div class="w-full bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-4 shadow-sm">
+        <div class="w-full bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex items-center gap-4 shadow-sm">
           ${avatar(r.name)}
-          <span class="flex-1 text-xl font-bold text-slate-700 truncate">${r.name}</span>
-          <span class="text-slate-400 font-medium text-sm border border-slate-200 px-3 py-1 rounded-full">Belum</span>
+          <span class="flex-1 text-xl font-bold text-slate-700 dark:text-slate-200 truncate">${r.name}</span>
+          <span class="text-slate-400 dark:text-slate-500 font-medium text-sm border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full">Belum</span>
         </div>`).join('')}</div>`
-          : `<p class="text-lg text-slate-500 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">Semua lansia sudah mengisi form 🎉</p>`}
+          : `<div class="text-lg text-slate-500 dark:text-slate-400 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center gap-3">${icon('party-popper', 'w-6 h-6 text-emerald-500')} Semua lansia sudah mengisi form</div>`}
     </section>
 
     <section class="pb-8">
       <div class="mb-5">
-        <h2 class="text-xl md:text-2xl font-bold text-slate-800 flex items-center gap-2">📅 Riwayat 7 Hari Terakhir</h2>
-        <p class="text-sm text-slate-500 mt-1">Klik kotak nama lansia untuk melihat detail hari ini.</p>
+        <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">${icon('calendar-days', 'w-6 h-6 text-brand-500')} Riwayat 7 Hari Terakhir</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">${icon('mouse-pointer-click', 'w-4 h-4')} Klik kotak nama lansia untuk melihat detail hari ini.</p>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         ${DB.residents.map(r => {
-            const hist = Array.isArray(r.history) && r.history.length === 7
-              ? r.history
-              : [null, null, null, null, null, null, null];
-
+            const hist = Array.isArray(r.history) && r.history.length === 7 ? r.history : [null, null, null, null, null, null, null];
             return `
-          <button onclick="openDetail(${r.id})" class="text-left w-full bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 transition-all focus:outline-none">
+          <button onclick="openDetail(${r.id})" class="text-left w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-slate-600 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 truncate pr-2">${r.name}</p>
-              ${icon('zoom-in', 'w-5 h-5 text-slate-300')}
+              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
               const m = moodUI[moodStr];
               return `
                 <div class="flex flex-col items-center">
-                  <div class="w-full aspect-square rounded-xl flex items-center justify-center text-xl md:text-2xl ${m ? '' : 'bg-slate-50 text-slate-300 border border-slate-100'}" 
-                       ${m ? `style="background:${m.soft}"` : ''} title="${m ? m.label : 'Belum isi'}">
-                    ${m ? m.emoji : '–'}
+                  <div class="w-full aspect-square rounded-xl flex items-center justify-center ${m ? '' : 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-700 border border-slate-100 dark:border-slate-800'}" 
+                       title="${m ? m.label : 'Belum isi'}">
+                    ${m ? `<span style="color:${m.color}">${icon(m.icon, 'w-6 h-6 md:w-7 md:h-7')}</span>` : '–'}
                   </div>
-                  <p class="text-[11px] md:text-xs font-bold text-slate-400 mt-2">${last7Days[i]}</p>
+                  <p class="text-[11px] md:text-xs font-bold text-slate-400 dark:text-slate-600 mt-2">${last7Days[i]}</p>
                 </div>`;
             }).join('')}
             </div>
@@ -549,29 +552,50 @@
       return `
   <div class="p-5 md:p-10 max-w-3xl mx-auto space-y-8 rise">
     <header>
-      <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Kelola Lansia</h1>
-      <p class="text-lg text-slate-500 mt-2">Tambahkan data lansia ke dalam sistem.</p>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Kelola Lansia</h1>
+      <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Tambahkan atau hapus data lansia dari sistem.</p>
     </header>
 
-    <section class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
-      <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">➕ Tambah Nama Baru</h2>
+    <section class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-sm">
+      <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">${icon('plus-circle', 'w-6 h-6')} Tambah Nama Baru</h2>
       <div class="space-y-5">
         <div>
-          <label class="block text-slate-600 font-bold mb-2">Nama Lengkap</label>
-          <input id="a-name" placeholder="Contoh: Oma Ratna" class="w-full border-2 border-slate-200 focus:border-brand-500 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 focus:bg-white">
+          <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Nama Lengkap</label>
+          <input id="a-name" placeholder="Contoh: Oma Ratna" class="w-full border border-slate-200 dark:border-slate-700 focus:border-brand-500 dark:focus:border-brand-400 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 dark:bg-slate-900 dark:text-white focus:bg-white">
         </div>
         <div>
-          <label class="block text-slate-600 font-bold mb-2">Kamar (Opsional)</label>
-          <input id="a-room" placeholder="Contoh: Melati 03" class="w-full border-2 border-slate-200 focus:border-brand-500 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 focus:bg-white">
+          <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Kamar (Opsional)</label>
+          <input id="a-room" placeholder="Contoh: Melati 03" class="w-full border border-slate-200 dark:border-slate-700 focus:border-brand-500 dark:focus:border-brand-400 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 dark:bg-slate-900 dark:text-white focus:bg-white">
         </div>
-        <button data-a="add" class="btn w-full bg-brand-700 hover:bg-brand-800 text-white py-4 mt-4 rounded-xl font-bold text-xl shadow-md">Simpan</button>
+        <button data-a="add" class="btn w-full bg-brand-700 hover:bg-brand-800 text-white py-4 mt-4 rounded-xl font-bold text-xl shadow-md">Simpan Data</button>
+      </div>
+    </section>
+
+    <!-- FITUR BARU: Hapus Daftar Lansia -->
+    <section class="pt-6">
+      <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">Daftar Lansia Terdaftar</h2>
+      <div class="space-y-3">
+        ${DB.residents.map(r => `
+          <div class="flex items-center justify-between bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-4">
+              ${avatar(r.name)}
+              <div>
+                <p class="font-bold text-lg text-slate-800 dark:text-white">${r.name}</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">${r.room || '-'}</p>
+              </div>
+            </div>
+            <button data-a="delete" data-id="${r.id}" class="p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors" title="Hapus Lansia">
+              ${icon('trash-2', 'w-6 h-6')}
+            </button>
+          </div>
+        `).join('')}
       </div>
     </section>
   </div>`;
     }
 
     // ==========================================
-    // 5. RENDER & EVENT LISTENER (SIDEBAR LOGIC)
+    // 5. RENDER & EVENT LISTENER
     // ==========================================
     function renderNav() {
       const nav = $('#bottom-nav');
@@ -585,16 +609,19 @@
       const isActive = (v) => S.view === v;
 
       const item = (v, ic, label) => `
-        <button data-a="nav" data-v="${v}" class="btn flex-1 md:flex-none flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-4 py-3 md:py-4 md:px-6 md:rounded-2xl transition-all ${isActive(v) ? 'text-brand-700 md:bg-brand-50 md:shadow-sm' : 'text-slate-400 hover:text-slate-800 md:hover:bg-slate-50'}">
+        <button data-a="nav" data-v="${v}" class="btn flex-1 md:flex-none flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-4 py-3 md:py-4 md:px-6 md:rounded-2xl transition-all ${isActive(v) ? 'bg-cream-main dark:bg-[#1e293b] text-brand-800 dark:text-white md:shadow-sm font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 md:hover:bg-slate-50 md:dark:hover:bg-slate-800/50 font-semibold'}">
           ${icon(ic, 'w-6 h-6')}
-          <span class="text-[12px] md:text-lg font-bold">${label}</span>
+          <span class="text-[12px] md:text-lg">${label}</span>
         </button>`;
 
       const brandHeader = `
-        <div class="hidden md:flex flex-col items-center justify-center gap-3 px-6 pb-6 pt-10 border-b border-slate-100 text-brand-700 w-full mb-4">
-          <div class="bg-brand-100 p-3 rounded-2xl">${icon('heart-handshake', 'w-10 h-10')}</div>
-          <span class="text-2xl font-bold text-center">Ruang<br>Terhubung</span>
+        <div class="hidden md:flex flex-col items-center justify-center gap-3 px-6 pb-6 pt-10 border-b border-slate-100 dark:border-slate-800 text-brand-800 dark:text-white w-full mb-4">
+          <div class="bg-brand-50 dark:bg-brand-900/50 p-3 rounded-2xl">${icon('leaf', 'w-10 h-10 fill-current text-brand-700 dark:text-brand-300')}</div>
+          <span class="text-2xl font-bold text-center leading-tight">Ruang<br>Terhubung</span>
         </div>`;
+
+      const themeIcon = isDark ? 'sun' : 'moon';
+      const themeLabel = isDark ? 'Terang' : 'Gelap';
 
       nav.innerHTML = `
         ${brandHeader}
@@ -602,6 +629,14 @@
           ${item('home', 'house', 'Beranda')}
           ${item('watch', 'clipboard-list', 'Pantauan')}
           ${item('manage', 'users', 'Kelola')}
+          
+          <!-- Tombol Tema -->
+          <div class="md:mt-auto md:pt-4 md:border-t md:border-slate-100 md:dark:border-slate-800">
+            <button onclick="toggleTheme()" class="btn w-full flex-1 md:flex-none flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-4 py-3 md:py-4 md:px-6 md:rounded-2xl transition-all text-slate-400 dark:text-slate-500 hover:text-brand-700 dark:hover:text-brand-300 md:hover:bg-slate-50 md:dark:hover:bg-slate-800/50">
+              ${icon(themeIcon, 'w-6 h-6')}
+              <span class="text-[12px] md:text-lg font-semibold">${themeLabel}</span>
+            </button>
+          </div>
         </div>`;
     }
 
@@ -618,39 +653,24 @@
       const { a, id, v } = el.dataset;
       switch (a) {
         case 'nav':
-          S.view = v;
-          sessionStorage.setItem('rt_last_view', v); // PERBAIKAN SINI
-          render();
-          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
-          loadData();
-          break;
+          S.view = v; sessionStorage.setItem('rt_last_view', v);
+          render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); loadData(); break;
         case 'start':
-          S.view = 'checkin';
-          sessionStorage.setItem('rt_last_view', 'checkin'); // PERBAIKAN SINI
+          S.view = 'checkin'; sessionStorage.setItem('rt_last_view', 'checkin');
           S.step = 1; S.rid = id; S.mood = null; S.needs = [];
-          render();
-          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
-          break;
+          render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
         case 'back':
-          S.step = 1;
-          render();
-          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
-          break;
+          S.step = 1; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
         case 'mood':
-          S.mood = +v; S.step = 2;
-          render();
-          window.scrollTo(0, 0); $('#app').scrollTo(0, 0);
-          break;
+          S.mood = +v; S.step = 2; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
         case 'need':
-          S.needs.includes(id) ? S.needs = S.needs.filter(x => x !== id) : S.needs.push(id);
-          render();
-          break;
+          S.needs.includes(id) ? S.needs = S.needs.filter(x => x !== id) : S.needs.push(id); render(); break;
         case 'finish':
-          finishCheckin();
-          break;
+          finishCheckin(); break;
         case 'add':
-          addResident();
-          break;
+          addResident(); break;
+        case 'delete':
+          deleteResident(id); break;
       }
     });
 
