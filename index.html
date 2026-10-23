@@ -28,7 +28,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // PERBAIKAN WARNA TEMA: Menyesuaikan dengan palet referensi minimalis
+    // Konfigurasi Tailwind dan Warna Tema Minimalis
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -48,7 +48,7 @@
               900: '#203028'
             },
             cream: {
-              main: '#fafafa', // Background Krem Hangat Pudar (sesuai referensi baru)
+              main: '#fafafa', // Background Krem Hangat Pudar
               menu: '#f5f7f5'
             }
           }
@@ -135,23 +135,22 @@
 </head>
 
 <body
-  class="font-sans text-slate-900 bg-cream-main dark:bg-[#1e293b] dark:text-slate-100 antialiased md:flex md:h-screen md:overflow-hidden transition-colors relative">
+  class="font-sans text-slate-900 bg-cream-main dark:bg-[#1e293b] dark:text-slate-100 antialiased md:flex md:h-screen md:overflow-hidden relative">
 
-  <!-- Tombol Tema: Kini jadi tombol universal di pojok kanan atas untuk semua ukuran layar -->
-  <button onclick="toggleTheme()" id="mobile-theme-btn"
-    class="fixed top-5 right-5 z-50 p-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-full shadow-md text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all"
-    style="display: none;">
-    <i data-lucide="moon" id="mobile-theme-icon" class="w-6 h-6"></i>
+  <!-- Tombol Tema Universal (Pojok Kanan Atas) -->
+  <button onclick="toggleTheme()" id="global-theme-btn"
+    class="fixed top-5 right-5 z-50 p-2.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-full shadow-md text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all">
+    <i data-lucide="moon" id="global-theme-icon" class="w-5 h-5"></i>
   </button>
 
   <!-- Navigasi -->
   <nav id="bottom-nav"
-    class="fixed bottom-0 left-0 w-full md:static md:w-72 md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all">
+    class="fixed bottom-0 left-0 w-full h-[72px] md:static md:w-72 md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all">
   </nav>
 
-  <!-- Container Utama Konten -->
+  <!-- Container Utama Konten (Dihapus efek transition-colors agar tidak lag saat klik) -->
   <div id="app"
-    class="w-full pb-28 pt-16 md:pt-0 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative transition-colors">
+    class="w-full pb-[90px] pt-16 md:pt-0 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
     <main id="view" class="h-full"></main>
   </div>
 
@@ -180,11 +179,11 @@
         localStorage.setItem('rt_theme', 'light');
         document.querySelector('meta[name="theme-color"]').setAttribute("content", "#fafafa");
       }
-      updateMobileThemeIcon();
+      updateThemeIcon();
     }
 
-    function updateMobileThemeIcon() {
-      const iconEl = $('#mobile-theme-icon');
+    function updateThemeIcon() {
+      const iconEl = $('#global-theme-icon');
       if (iconEl) {
         iconEl.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
         if (window.lucide) lucide.createIcons();
@@ -295,6 +294,36 @@
       if (window.lucide) lucide.createIcons();
     }
 
+    // TAMPILAN POP-UP EDIT LANSIA
+    function openEditModal(id) {
+      const r = DB.residents.find(x => x.id == id);
+      if (!r) return;
+
+      $('#modal-root').innerHTML = `
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm modal-fade-in" onclick="closeDetail()"></div>
+          <div class="relative bg-white dark:bg-slate-800 rounded-3xl w-full max-w-md shadow-2xl modal-slide-up overflow-hidden border border-slate-200 dark:border-slate-700 p-6 md:p-8">
+            <h3 class="font-extrabold text-2xl text-slate-800 dark:text-white mb-6 flex items-center gap-2">${icon('pencil', 'w-6 h-6')} Edit Data Lansia</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Nama Lengkap</label>
+                <input id="edit-name" value="${r.name}" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-lg bg-slate-50 dark:bg-[#0f172a] dark:text-white outline-none focus:border-brand-500 transition-colors">
+              </div>
+              <div>
+                <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Kamar</label>
+                <input id="edit-room" value="${r.room || ''}" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-lg bg-slate-50 dark:bg-[#0f172a] dark:text-white outline-none focus:border-brand-500 transition-colors">
+              </div>
+              <div class="flex gap-3 pt-4">
+                <button onclick="closeDetail()" class="flex-1 p-4 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Batal</button>
+                <button onclick="saveEdit(${r.id})" class="flex-1 p-4 rounded-xl font-bold text-white bg-brand-700 hover:bg-brand-800 transition-colors">Simpan</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+
     // ==========================================
     // 3. FUNGSI DATABASE
     // ==========================================
@@ -343,6 +372,20 @@
       loadData();
     }
 
+    // FUNGSI SIMPAN EDIT LANSIA
+    window.saveEdit = async function (id) {
+      const newName = $('#edit-name').value.trim();
+      const newRoom = $('#edit-room').value.trim();
+      if (!newName) return toast('Nama lansia tidak boleh kosong.', true);
+
+      closeDetail(); // Tutup modal setelah klik simpan
+      const { error } = await supabaseClient.from('residents').update({ name: newName, room: newRoom }).eq('id', id);
+
+      if (error) return toast("Gagal memperbarui data.", true);
+      toast("Data lansia berhasil diubah.");
+      loadData();
+    }
+
     async function deleteResident(id) {
       if (!confirm("Yakin ingin menghapus nama lansia ini? Semua riwayatnya akan ikut terhapus.")) return;
 
@@ -358,11 +401,8 @@
     // ==========================================
 
     function viewLanding() {
-      const mobBtn = $('#mobile-theme-btn');
-      if (mobBtn) mobBtn.style.display = 'none';
-
       return `
-  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-50 transition-colors duration-300">
+  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-40 transition-colors duration-300 pt-10 md:pt-0">
     <div class="flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
       <div class="flex items-center gap-3 text-slate-800 dark:text-white font-bold text-xl md:text-2xl">
         <div class="bg-brand-50 dark:bg-brand-900/50 p-2 rounded-full rounded-tr-none">
@@ -370,9 +410,6 @@
         </div>
         <span class="leading-tight">Ruang<br>Terhubung</span>
       </div>
-      <button data-a="help" class="btn flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">
-        <span class="bg-slate-700 dark:bg-slate-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">?</span> Bantuan
-      </button>
     </div>
 
     <div class="flex-1 flex flex-col justify-center px-8 w-full max-w-5xl mx-auto relative rise mt-10 md:mt-0">
@@ -398,14 +435,11 @@
     }
 
     function viewHome() {
-      const mobBtn = $('#mobile-theme-btn');
-      if (mobBtn) mobBtn.style.display = 'block';
-
       const done = DB.residents.filter(r => r.filled).length;
       return `
   <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-8 rise">
     <header>
-      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white flex items-center gap-3">Selamat datang!👋</h1>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white flex items-center gap-3">Selamat datang!</h1>
       <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Pilih nama Anda untuk mulai check-in hari ini.</p>
     </header>
 
@@ -439,14 +473,11 @@
     }
 
     function viewCheckin() {
-      const mobBtn = $('#mobile-theme-btn');
-      if (mobBtn) mobBtn.style.display = 'block';
-
       const r = DB.residents.find(x => x.id == S.rid);
       if (!r) return viewHome();
 
       if (S.step === 1) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="home" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-5xl font-extrabold leading-tight text-slate-800 dark:text-white">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700 dark:text-brand-400">Bagaimana perasaan Anda hari ini?</span></h1>
       <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -460,15 +491,15 @@
     </div>`;
 
       if (S.step === 2) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="checkin" data-id="${S.rid}" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Apakah Anda memerlukan sesuatu?</h1>
       <p class="text-xl text-slate-500 dark:text-slate-400 mt-2">Bisa pilih lebih dari satu pilihan di bawah.</p>
       <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         ${NEEDS.map(n => {
         const on = S.needs.includes(n.label); return `
-        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border-2 text-xl font-bold flex items-center gap-4 px-6 text-left transition-colors ${on ? 'bg-brand-700 border-brand-900 text-white shadow-md' : 'bg-white dark:bg-[#0f172a] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand-300 shadow-sm'}">
-          <span class="${on ? 'text-white' : 'text-brand-600 dark:text-brand-400'}">${icon(n.icon, 'w-8 h-8')}</span><span class="flex-1">${n.label}</span>
+        <button data-a="need" data-id="${n.label}" class="btn w-full min-h-[80px] rounded-2xl border ${on ? 'bg-brand-700 border-brand-700 text-white shadow-md' : 'bg-white dark:bg-[#0f172a] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm hover:border-brand-300 dark:hover:border-slate-500'} text-lg md:text-xl font-bold flex items-center gap-4 px-6 text-left transition-all">
+          <span class="${on ? 'text-white' : 'text-brand-700 dark:text-brand-400'}">${icon(n.icon, 'w-6 h-6 md:w-8 md:h-8')}</span><span class="flex-1">${n.label}</span>
         </button>`;
       }).join('')}
       </div>
@@ -485,9 +516,6 @@
     }
 
     function viewWatch() {
-      const mobBtn = $('#mobile-theme-btn');
-      if (mobBtn) mobBtn.style.display = 'block';
-
       const att = DB.residents.filter(r => r.filled && (r.mood === 'sad' || (r.needs && r.needs.length > 0)));
       const pending = DB.residents.filter(r => !r.filled);
 
@@ -577,14 +605,11 @@
     }
 
     function viewManage() {
-      const mobBtn = $('#mobile-theme-btn');
-      if (mobBtn) mobBtn.style.display = 'block';
-
       return `
   <div class="p-5 md:p-10 max-w-3xl mx-auto space-y-8 rise">
     <header>
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Kelola Lansia</h1>
-      <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Tambahkan atau hapus data lansia dari sistem.</p>
+      <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Tambahkan, ubah, atau hapus data lansia dari sistem.</p>
     </header>
 
     <section class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-sm">
@@ -602,7 +627,7 @@
       </div>
     </section>
 
-    <!-- FITUR BARU: Hapus Daftar Lansia -->
+    <!-- FITUR BARU: Edit & Hapus Daftar Lansia -->
     <section class="pt-6">
       <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">Daftar Lansia Terdaftar</h2>
       <div class="space-y-3">
@@ -615,9 +640,14 @@
                 <p class="text-sm text-slate-500 dark:text-slate-400">${r.room || '-'}</p>
               </div>
             </div>
-            <button data-a="delete" data-id="${r.id}" class="p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors" title="Hapus Lansia">
-              ${icon('trash-2', 'w-6 h-6')}
-            </button>
+            <div class="flex gap-2">
+              <button data-a="edit" data-id="${r.id}" class="p-3 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-slate-700 rounded-xl transition-colors" title="Edit Lansia">
+                ${icon('pencil', 'w-5 h-5')}
+              </button>
+              <button data-a="delete" data-id="${r.id}" class="p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors" title="Hapus Lansia">
+                ${icon('trash-2', 'w-5 h-5')}
+              </button>
+            </div>
           </div>
         `).join('')}
       </div>
@@ -639,10 +669,14 @@
       nav.style.display = 'block';
       const isActive = (v) => S.view === v;
 
+      // PENGATURAN RUANG MENU: Menyesuaikan agar menu terisi penuh di desktop & mobile
+      const activeClass = "bg-[#1e293b] text-white dark:bg-slate-800 md:bg-brand-50 md:dark:bg-[#1e293b] md:text-brand-800 md:dark:text-white font-bold";
+      const inactiveClass = "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 md:hover:bg-slate-50 md:dark:hover:bg-slate-800/50 font-semibold";
+
       const item = (v, ic, label) => `
-        <button data-a="nav" data-v="${v}" class="btn flex-1 md:flex-none flex flex-col md:flex-row items-center md:justify-start gap-1 md:gap-4 py-3 md:py-4 md:px-6 md:rounded-2xl transition-all ${isActive(v) ? 'bg-cream-main dark:bg-[#1e293b] text-brand-800 dark:text-white md:shadow-sm font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 md:hover:bg-slate-50 md:dark:hover:bg-slate-800/50 font-semibold'}">
-          ${icon(ic, 'w-6 h-6')}
-          <span class="text-[12px] md:text-lg">${label}</span>
+        <button data-a="nav" data-v="${v}" class="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-4 h-full md:h-auto py-2 md:py-4 md:px-6 md:rounded-2xl transition-all ${isActive(v) ? activeClass : inactiveClass}">
+          ${icon(ic, 'w-5 h-5 md:w-6 md:h-6')}
+          <span class="text-[11px] md:text-lg">${label}</span>
         </button>`;
 
       const brandHeader = `
@@ -653,7 +687,7 @@
 
       nav.innerHTML = `
         ${brandHeader}
-        <div class="flex flex-row md:flex-col w-full gap-1 md:gap-2 px-2 md:px-4">
+        <div class="flex flex-row md:flex-col w-full h-full md:h-auto gap-0 md:gap-2 px-0 md:px-4">
           ${item('home', 'house', 'Beranda')}
           ${item('watch', 'clipboard-list', 'Pantauan')}
           ${item('manage', 'users', 'Kelola')}
@@ -665,7 +699,7 @@
     function render() {
       $('#view').innerHTML = VIEWS[S.view]();
       renderNav();
-      updateMobileThemeIcon();
+      updateThemeIcon();
       if (window.lucide) lucide.createIcons();
     }
 
@@ -680,7 +714,7 @@
           S.view = 'checkin'; sessionStorage.setItem('rt_last_view', 'checkin');
           S.step = 1; S.rid = id; S.mood = null; S.needs = [];
           render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
-        case 'back':
+        case 'back': // Perbaikan tombol back
           S.step = 1; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
         case 'mood':
           S.mood = +v; S.step = 2; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
@@ -692,8 +726,8 @@
           addResident(); break;
         case 'delete':
           deleteResident(id); break;
-        case 'help':
-          toast("Aplikasi ini digunakan untuk mencatat perasaan dan kebutuhan harian lansia secara sederhana.", false, 6000); break;
+        case 'edit':
+          openEditModal(id); break; // Menjalankan popup modal edit khusus
       }
     });
 
