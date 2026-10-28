@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#fafafa" />
   <title>Ruang Terhubung — Check-in Perasaan Lansia</title>
 
-  <!-- PERBAIKAN: Favicon (Ikon Tab Browser) - Menggunakan format kode SVG Daun agar kebal dari cache dan langsung muncul -->
+  <!-- Favicon (Ikon Tab Browser) - Menggunakan format kode SVG Daun agar kebal dari cache dan langsung muncul -->
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232f483c' stroke='%232f483c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z'/><path d='M2 22 12 12'/></svg>" />
 
@@ -177,7 +177,6 @@
       <div class="flex items-center gap-2 md:gap-3">
         <div
           class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
-          <!-- Logo Daun Ruang Terhubung langsung di-embed dengan SVG -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
             class="w-4 h-4 md:w-5 md:h-5 text-brand-700 dark:text-brand-400">
@@ -555,8 +554,8 @@
         </p>
       </div>
       
-      <!-- PERBAIKAN: md:bottom-10 diubah menjadi md:bottom-28 agar posisi ikon naik khusus di desktop -->
-      <div class="absolute right-4 bottom-0 md:bottom-28 md:right-10 text-brand-200 dark:text-slate-800 opacity-60 z-10 hover:scale-105 transition-transform duration-500">
+      <!-- PERBAIKAN FINAL: Atribut md:top-12 md:bottom-auto ditambahkan agar posisi ikon orang khusus di desktop tetap berada di bagian atas dan tidak turun, tapi di mobile tetap menggunakan class bottom-0 bawaan -->
+      <div class="absolute right-4 bottom-0 md:bottom-auto md:top-12 md:right-10 text-brand-200 dark:text-slate-800 opacity-60 z-10 hover:scale-105 transition-transform duration-500">
         ${icon('users', 'w-[200px] h-[200px] md:w-[350px] md:h-[350px]')}
       </div>
       
