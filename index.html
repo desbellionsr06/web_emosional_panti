@@ -144,25 +144,21 @@
     <i data-lucide="moon" id="global-theme-icon" class="w-5 h-5"></i>
   </button>
 
-  <!-- Header Global Mobile (Logo UM & Panti) -->
+  <!-- Header Global Mobile (Khusus Tampilan HP: Logo UM & Nama Panti) -->
   <div id="mobile-header"
     class="md:hidden fixed top-0 left-0 w-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-40 p-3 flex items-center gap-3 transition-all">
     <img
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png"
       class="w-8 h-8 object-contain drop-shadow-sm" alt="UM">
-    <div
-      class="w-8 h-8 rounded-full bg-brand-100 dark:bg-slate-700 flex items-center justify-center border border-brand-200 dark:border-slate-600">
-      <i data-lucide="home" class="w-4 h-4 text-brand-600 dark:text-brand-300"></i>
-    </div>
     <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
-      <span class="text-[11px] font-bold text-slate-800 dark:text-white leading-tight">Proyek Pengabdian PKn</span>
-      <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Kelompok 04</span>
+      <span class="text-sm font-bold text-slate-800 dark:text-white leading-tight uppercase">Pondok Lansia</span>
+      <span class="text-sm font-bold text-brand-700 dark:text-brand-400 leading-tight uppercase">Al-Ishlah</span>
     </div>
   </div>
 
   <!-- Navigasi -->
   <nav id="bottom-nav"
-    class="fixed bottom-0 left-0 w-full h-[72px] md:static md:w-72 md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all">
+    class="fixed bottom-0 left-0 w-full h-[72px] md:static md:w-[280px] md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all flex flex-col justify-between">
   </nav>
 
   <!-- Container Utama Konten -->
@@ -415,7 +411,7 @@
 
       if (!newName) return toast('Nama lansia tidak boleh kosong.', true);
 
-      closeDetail();
+      closeDetail(); // Tutup modal setelah klik simpan
       const { error } = await supabaseClient.from('residents').update({ name: newName, room: newRoom, umur: newAge }).eq('id', id);
 
       if (error) return toast("Gagal memperbarui data. (Pastikan kolom 'umur' ada di DB)", true, 6000);
@@ -499,16 +495,6 @@
       return `
   <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-30 transition-colors duration-300 pt-16 md:pt-0">
     <div class="hidden md:flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
-      <div class="flex items-center gap-3">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png" class="w-10 h-10 object-contain drop-shadow-sm" alt="UM">
-        <div class="w-10 h-10 rounded-full bg-brand-100 dark:bg-slate-700 flex items-center justify-center border border-brand-200 dark:border-slate-600 shadow-sm">
-           <i data-lucide="home" class="w-5 h-5 text-brand-600 dark:text-brand-300"></i>
-        </div>
-        <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
-           <span class="text-sm font-bold text-slate-800 dark:text-white leading-tight">Proyek Pengabdian PKn</span>
-           <span class="text-xs text-slate-500 dark:text-slate-400 leading-tight">Kelompok 04</span>
-        </div>
-      </div>
     </div>
 
     <div class="flex-1 flex flex-col justify-center px-8 w-full max-w-5xl mx-auto relative rise mt-10 md:mt-0">
@@ -529,6 +515,12 @@
       <button data-a="nav" data-v="home" class="w-full bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500 text-white rounded-full py-5 md:py-6 text-xl md:text-2xl font-bold flex justify-center items-center gap-3 shadow-[0_10px_30px_rgba(47,72,60,0.3)] hover:shadow-[0_15px_40px_rgba(47,72,60,0.4)] rise transition-all">
         Mulai Cek Emosi ${icon('arrow-right', 'w-7 h-7 md:w-8 md:h-8')}
       </button>
+      
+      <!-- Tulisan Proyek Pengabdian untuk Tampilan Mobile (Diletakkan di bawah tombol) -->
+      <div class="md:hidden mt-6 text-center w-full">
+         <p class="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Proyek Pengabdian PKn</p>
+         <p class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Kelompok 04</p>
+      </div>
     </div>
   </div>`;
     }
@@ -584,7 +576,7 @@
       if (!r) return viewHome();
 
       if (S.step === 1) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="home" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-5xl font-extrabold leading-tight text-slate-800 dark:text-white">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700 dark:text-brand-400">Bagaimana perasaan Anda hari ini?</span></h1>
       <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -656,13 +648,6 @@
     </header>
 
     <section>
-      <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('bar-chart-2', 'w-6 h-6 text-brand-500')} Laporan 7 Hari Terakhir</h2>
-      <div class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-4 md:p-6 shadow-sm h-64 md:h-80">
-        <canvas id="historyChart"></canvas>
-      </div>
-    </section>
-
-    <section>
       <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('bell', 'w-6 h-6 text-amber-500 fill-current')} Perlu Diperhatikan</h2>
       ${att.length ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-5">${att.map(r => {
         const m = moodUI[r.mood] || moodUI['neutral'];
@@ -731,6 +716,15 @@
           }).join('')}
       </div>
     </section>
+
+    <!-- Grafik Laporan Di Pindah Ke Bawah -->
+    <section class="pb-10 pt-5 border-t border-slate-200 dark:border-slate-800 mt-8">
+      <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('bar-chart-2', 'w-6 h-6 text-brand-500')} Laporan 7 Hari Terakhir</h2>
+      <div class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-4 md:p-6 shadow-sm h-64 md:h-80 w-full max-w-4xl">
+        <canvas id="historyChart"></canvas>
+      </div>
+    </section>
+
   </div>`;
     }
 
@@ -825,9 +819,13 @@
                 <i data-lucide="home" class="w-4 h-4 text-brand-600 dark:text-brand-300"></i>
              </div>
           </div>
-          <div class="text-center mt-2">
-            <p class="text-[11px] font-bold text-slate-800 dark:text-white">Proyek Pengabdian PKn</p>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">Kelompok 04</p>
+          <div class="text-center mt-2 flex flex-col items-center">
+            <span class="text-[12px] font-bold text-slate-800 dark:text-white">Proyek Pengabdian PKn</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">Kelompok 04</span>
+          </div>
+          <!-- Nama kelompok di paling bawah sidebar desktop -->
+          <div class="absolute bottom-5 text-center w-full px-6 opacity-60">
+             <p class="text-[10px] font-bold text-slate-400">© 2026 | Kelompok 04</p>
           </div>
         </div>`;
 
