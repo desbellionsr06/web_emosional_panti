@@ -177,6 +177,7 @@
       <div class="flex items-center gap-2 md:gap-3">
         <div
           class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
+          <!-- Logo Daun Ruang Terhubung langsung di-embed dengan SVG -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
             class="w-4 h-4 md:w-5 md:h-5 text-brand-700 dark:text-brand-400">
@@ -553,11 +554,12 @@
           Yuk, ceritakan perasaan Anda secara sederhana. Ini hanya untuk mengetahui keadaan emosi Anda saat ini.
         </p>
       </div>
-      <div class="absolute right-4 bottom-0 md:bottom-10 md:right-10 text-brand-200 dark:text-slate-800 opacity-60 z-10 hover:scale-105 transition-transform duration-500">
+      
+      <!-- PERBAIKAN: md:bottom-10 diubah menjadi md:bottom-28 agar posisi ikon naik khusus di desktop -->
+      <div class="absolute right-4 bottom-0 md:bottom-28 md:right-10 text-brand-200 dark:text-slate-800 opacity-60 z-10 hover:scale-105 transition-transform duration-500">
         ${icon('users', 'w-[200px] h-[200px] md:w-[350px] md:h-[350px]')}
       </div>
       
-      <!-- PERBAIKAN: Jarak margin bottom pada paragraf di atas dikurangi (md:mb-6) agar tombol ini naik -->
       <div class="w-full z-20 mt-2">
         <button data-a="nav" data-v="home" class="w-full md:w-[380px] bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500 text-white rounded-full py-5 md:py-6 text-xl md:text-2xl font-bold flex justify-center items-center gap-3 shadow-[0_10px_30px_rgba(47,72,60,0.3)] hover:shadow-[0_15px_40px_rgba(47,72,60,0.4)] rise transition-all">
           Mulai Cek Emosi ${icon('arrow-right', 'w-7 h-7 md:w-8 md:h-8')}
@@ -642,7 +644,7 @@
       
       <div class="mt-5 border-t border-slate-200 dark:border-slate-700 pt-5">
         <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Lainnya (Opsional)</label>
-        <input id="custom-need" type="text" placeholder="Ketik jika kebutuhan tidak ada di pilihan..." class="w-full border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-lg bg-white dark:bg-[#0f172a] text-slate-800 dark:text-white outline-none focus:border-brand-50 transition-colors shadow-sm">
+        <input id="custom-need" type="text" placeholder="Ketik jika kebutuhan tidak ada di pilihan..." class="w-full border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-lg bg-white dark:bg-[#0f172a] text-slate-800 dark:text-white outline-none focus:border-brand-500 transition-colors shadow-sm">
       </div>
 
       <button data-a="finish" class="btn mt-10 w-full md:max-w-md mx-auto block min-h-[72px] rounded-2xl bg-brand-700 hover:bg-brand-800 text-white text-2xl font-bold shadow-lg">Kirim Laporan</button>
@@ -730,8 +732,7 @@
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-slate-600 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>
-              ${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
+              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
