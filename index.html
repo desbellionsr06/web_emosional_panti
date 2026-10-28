@@ -133,18 +133,26 @@
       }
     }
 
-    /* Padding penyesuaian khusus untuk footer */
     .footer-padding {
       padding-bottom: 110px;
-      /* Mobile: 72px (nav) + 38px (footer) */
     }
 
     @media (min-width: 768px) {
       .footer-padding {
         padding-bottom: 38px;
       }
+    }
 
-      /* Desktop: hanya untuk footer 38px */
+    /* PERBAIKAN: Menghilangkan background putih pada JPEG logo UM */
+    .logo-transparent {
+      mix-blend-mode: multiply;
+    }
+
+    .dark .logo-transparent {
+      /* Di mode gelap, multiply akan membuat gambar hilang, jadi kita membalik warnanya agar putihnya hilang (jika logo monokrom) 
+         Jika logonya berwarna, teknik filter contrast dan brightness sangat membantu menyamarkan putih */
+      mix-blend-mode: screen;
+      filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.2));
     }
   </style>
 </head>
@@ -156,9 +164,10 @@
   <div id="top-header"
     class="fixed top-0 left-0 w-full bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 z-50 px-4 py-3 flex items-center justify-between transition-colors">
     <div class="flex items-center gap-3">
-      <!-- Logo UM (Background dihilangkan / Transparan) -->
-      <img src="./logoum.jpeg"
-        class="w-8 h-8 md:w-10 md:h-10 object-contain drop-shadow-sm mix-blend-multiply dark:mix-blend-normal" alt="UM">
+      <!-- PERBAIKAN: Logo UM dengan class transparansi -->
+      <div class="bg-transparent overflow-hidden rounded-full flex items-center justify-center">
+        <img src="./logoum.jpeg" class="w-8 h-8 md:w-10 md:h-10 object-contain logo-transparent" alt="UM">
+      </div>
 
       <!-- Logo & Nama Aplikasi -->
       <div class="flex items-center gap-2">
@@ -174,7 +183,7 @@
         </div>
       </div>
 
-      <!-- Nama Panti (Selalu Tampil di Header) -->
+      <!-- PERBAIKAN: Nama Panti (Kini tampil di header versi Desktop juga) -->
       <div class="hidden md:flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-2">
         <span
           class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">PONDOK
@@ -187,7 +196,7 @@
     <!-- Tombol Tema Universal -->
     <button onclick="toggleTheme()"
       class="p-2 md:p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all">
-      <i data-lucide="moon" id="global-theme-icon" class="w-4 h-4 md:w-5 md:h-5"></i>
+      <i data-lucide="moon" id="global-theme-icon" class="w-4 h-4 md:w-5 h-5"></i>
     </button>
   </div>
 
@@ -198,7 +207,7 @@
       AL-ISHLAH</span>
   </div>
 
-  <!-- Navigasi -->
+  <!-- Navigasi (Mobile di bawah, Desktop di kiri) -->
   <nav id="bottom-nav"
     class="fixed bottom-[38px] left-0 w-full h-[72px] md:static md:w-[280px] md:h-full md:mt-[65px] md:pb-[38px] bg-white dark:bg-[#0f172a] border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-800 z-40 shrink-0 transition-all flex flex-col justify-between">
   </nav>
@@ -209,7 +218,7 @@
     <main id="view" class="h-full"></main>
   </div>
 
-  <!-- Footer Hak Cipta Universal -->
+  <!-- Footer Hak Cipta Universal (Hitam panjang di bawah, berlaku untuk HP & Desktop) -->
   <div
     class="fixed bottom-0 left-0 w-full h-[38px] bg-[#0a0a0a] text-white text-center flex items-center justify-center md:justify-start md:px-10 z-50">
     <span class="text-[10px] md:text-[11px] font-bold tracking-widest text-slate-300">© 2026 | PROYEK PENGABDIAN PKN ·
@@ -290,7 +299,7 @@
 
     function toast(msg, isError = false, duration = 4000) {
       const el = document.createElement('div');
-      el.className = `fixed top-10 md:top-[80px] left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-800'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
+      el.className = `fixed top-10 md:top-6 left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-800'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
       el.textContent = msg;
       $('#toast-root').appendChild(el);
       setTimeout(() => el.remove(), duration);
@@ -604,7 +613,7 @@
       if (!r) return viewHome();
 
       if (S.step === 1) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8 md:pt-12"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8 md:pt-12"><button data-a="nav" data-v="home" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-5xl font-extrabold leading-tight text-slate-800 dark:text-white">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700 dark:text-brand-400">Bagaimana perasaan Anda hari ini?</span></h1>
       <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -742,7 +751,7 @@
       </div>
     </section>
 
-    <!-- Grafik Laporan -->
+    <!-- Grafik Laporan Di Pindah Ke Bawah -->
     <section class="pb-10 pt-5 border-t border-slate-200 dark:border-slate-800 mt-8">
       <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('bar-chart-2', 'w-6 h-6 text-brand-500')} Laporan 7 Hari Terakhir</h2>
       <div class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-4 md:p-6 shadow-sm h-64 md:h-80 w-full max-w-4xl">
@@ -865,8 +874,6 @@
           S.step = 1; S.rid = id; S.mood = null; S.needs = [];
           render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
         case 'back':
-          // Tombol kembali mengarah ke Beranda
-          S.view = 'home'; sessionStorage.setItem('rt_last_view', 'home');
           S.step = 1; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
         case 'mood':
           S.mood = +v; S.step = 2; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
