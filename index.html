@@ -24,8 +24,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Library Supabase -->
+  <!-- Library Supabase & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
     // Konfigurasi Tailwind dan Warna Tema Minimalis
@@ -143,14 +144,30 @@
     <i data-lucide="moon" id="global-theme-icon" class="w-5 h-5"></i>
   </button>
 
+  <!-- Header Global Mobile (Logo UM & Panti) -->
+  <div id="mobile-header"
+    class="md:hidden fixed top-0 left-0 w-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-40 p-3 flex items-center gap-3 transition-all">
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png"
+      class="w-8 h-8 object-contain drop-shadow-sm" alt="UM">
+    <div
+      class="w-8 h-8 rounded-full bg-brand-100 dark:bg-slate-700 flex items-center justify-center border border-brand-200 dark:border-slate-600">
+      <i data-lucide="home" class="w-4 h-4 text-brand-600 dark:text-brand-300"></i>
+    </div>
+    <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
+      <span class="text-[11px] font-bold text-slate-800 dark:text-white leading-tight">Proyek Pengabdian PKn</span>
+      <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Kelompok 04</span>
+    </div>
+  </div>
+
   <!-- Navigasi -->
   <nav id="bottom-nav"
     class="fixed bottom-0 left-0 w-full h-[72px] md:static md:w-72 md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all">
   </nav>
 
-  <!-- Container Utama Konten (Dihapus efek transition-colors agar tidak lag saat klik) -->
+  <!-- Container Utama Konten -->
   <div id="app"
-    class="w-full pb-[90px] pt-16 md:pt-0 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
+    class="w-full pb-[90px] pt-[72px] md:pt-0 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
     <main id="view" class="h-full"></main>
   </div>
 
@@ -180,6 +197,9 @@
         document.querySelector('meta[name="theme-color"]').setAttribute("content", "#fafafa");
       }
       updateThemeIcon();
+
+      // Update warna Chart jika sedang berada di halaman Pantauan
+      if (S.view === 'watch') renderChart();
     }
 
     function updateThemeIcon() {
@@ -241,6 +261,7 @@
 
       const m = (r.mood === 'sad') ? MOODS[1] : (r.mood === 'neutral') ? MOODS[2] : (r.mood === 'happy') ? MOODS[3] : null;
       const isFilled = r.filled && m;
+      const ageText = r.umur ? `(${r.umur} thn)` : '';
 
       $('#modal-root').innerHTML = `
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -255,7 +276,7 @@
               <div class="flex items-center gap-4">
                 ${avatar(r.name)}
                 <div>
-                  <p class="text-2xl font-bold text-slate-800 dark:text-white">${r.name}</p>
+                  <p class="text-2xl font-bold text-slate-800 dark:text-white">${r.name} <span class="text-lg text-slate-500 font-medium">${ageText}</span></p>
                   <p class="text-slate-500 dark:text-slate-400 font-medium">${r.room || 'Kamar Tidak Diketahui'}</p>
                 </div>
               </div>
@@ -273,7 +294,7 @@
                   </div>
                   
                   ${r.needs && r.needs.length > 0 ? `
-                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">${icon('list', 'w-4 h-4')} Yang Dibutuhkan:</p>
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">${icon('list', 'w-4 h-4')} Kebutuhan:</p>
                     <ul class="space-y-2">
                       ${r.needs.map(n => `<li class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div>${n}</li>`).join('')}
                     </ul>
@@ -310,7 +331,11 @@
                 <input id="edit-name" value="${r.name}" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-lg bg-slate-50 dark:bg-[#0f172a] dark:text-white outline-none focus:border-brand-500 transition-colors">
               </div>
               <div>
-                <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Kamar</label>
+                <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Umur (Opsional)</label>
+                <input id="edit-age" type="number" value="${r.umur || ''}" placeholder="Contoh: 72" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-lg bg-slate-50 dark:bg-[#0f172a] dark:text-white outline-none focus:border-brand-500 transition-colors">
+              </div>
+              <div>
+                <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Kamar (Opsional)</label>
                 <input id="edit-room" value="${r.room || ''}" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-lg bg-slate-50 dark:bg-[#0f172a] dark:text-white outline-none focus:border-brand-500 transition-colors">
               </div>
               <div class="flex gap-3 pt-4">
@@ -350,6 +375,12 @@
       if (!r.filled) { updatedHistory.shift(); updatedHistory.push(moodName); }
       else { updatedHistory[6] = moodName; }
 
+      // Menangkap Input Kebutuhan Kustom (Lainnya)
+      const customInput = document.getElementById('custom-need');
+      if (customInput && customInput.value.trim() !== '') {
+        S.needs.push(customInput.value.trim());
+      }
+
       await supabaseClient.from('residents').update({ filled: true, time: timeStr, mood: moodName, needs: S.needs, history: updatedHistory }).eq('id', S.rid);
 
       S.step = 3;
@@ -361,27 +392,33 @@
     async function addResident() {
       const name = $('#a-name').value.trim();
       const room = $('#a-room').value.trim();
+      const ageVal = $('#a-age').value.trim();
+      const age = ageVal ? parseInt(ageVal) : null;
+
       if (!name) return toast('Mohon isi nama dulu');
 
       const defaultHistory = [null, null, null, null, null, null, null];
-      const { error } = await supabaseClient.from('residents').insert([{ name, room, filled: false, needs: [], history: defaultHistory }]);
+      const { error } = await supabaseClient.from('residents').insert([{ name, room, umur: age, filled: false, needs: [], history: defaultHistory }]);
 
-      if (error) return toast("Gagal menyimpan.", true);
+      if (error) return toast("Gagal menyimpan. (Pastikan kolom 'umur' sudah ada di database)", true, 6000);
+
       toast(`${name} ditambahkan!`);
-      $('#a-name').value = ''; $('#a-room').value = '';
+      $('#a-name').value = ''; $('#a-room').value = ''; $('#a-age').value = '';
       loadData();
     }
 
-    // FUNGSI SIMPAN EDIT LANSIA
     window.saveEdit = async function (id) {
       const newName = $('#edit-name').value.trim();
       const newRoom = $('#edit-room').value.trim();
+      const ageVal = $('#edit-age').value.trim();
+      const newAge = ageVal ? parseInt(ageVal) : null;
+
       if (!newName) return toast('Nama lansia tidak boleh kosong.', true);
 
-      closeDetail(); // Tutup modal setelah klik simpan
-      const { error } = await supabaseClient.from('residents').update({ name: newName, room: newRoom }).eq('id', id);
+      closeDetail();
+      const { error } = await supabaseClient.from('residents').update({ name: newName, room: newRoom, umur: newAge }).eq('id', id);
 
-      if (error) return toast("Gagal memperbarui data.", true);
+      if (error) return toast("Gagal memperbarui data. (Pastikan kolom 'umur' ada di DB)", true, 6000);
       toast("Data lansia berhasil diubah.");
       loadData();
     }
@@ -397,18 +434,80 @@
     }
 
     // ==========================================
+    // CHART RENDERING LOGIC
+    // ==========================================
+    function renderChart() {
+      const ctx = document.getElementById('historyChart');
+      if (!ctx) return;
+
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toLocaleDateString('id-ID', { weekday: 'short' });
+      });
+
+      const dataSenang = [0, 0, 0, 0, 0, 0, 0];
+      const dataBiasa = [0, 0, 0, 0, 0, 0, 0];
+      const dataSedih = [0, 0, 0, 0, 0, 0, 0];
+
+      DB.residents.forEach(r => {
+        const hist = Array.isArray(r.history) && r.history.length === 7 ? r.history : [null, null, null, null, null, null, null];
+        hist.forEach((mood, i) => {
+          if (mood === 'happy') dataSenang[i]++;
+          else if (mood === 'neutral') dataBiasa[i]++;
+          else if (mood === 'sad') dataSedih[i]++;
+        });
+      });
+
+      if (window.myChart) window.myChart.destroy();
+
+      const textColor = isDark ? '#cbd5e1' : '#475569';
+      const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: last7Days,
+          datasets: [
+            { label: 'Senang', data: dataSenang, backgroundColor: '#a7f3d0', borderRadius: 4 }, // Hijau Pucat
+            { label: 'Biasa saja', data: dataBiasa, backgroundColor: '#fde68a', borderRadius: 4 }, // Kuning Pucat
+            { label: 'Sedih', data: dataSedih, backgroundColor: '#fecaca', borderRadius: 4 } // Merah Muda
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: textColor, font: { family: "'Atkinson Hyperlegible', sans-serif" } } }
+          },
+          scales: {
+            x: { ticks: { color: textColor }, grid: { display: false } },
+            y: { ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+
+    // ==========================================
     // 4. TAMPILAN HALAMAN (UI)
     // ==========================================
 
     function viewLanding() {
+      const mobHeader = $('#mobile-header');
+      if (mobHeader) mobHeader.style.display = 'flex';
+
       return `
-  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-40 transition-colors duration-300 pt-10 md:pt-0">
-    <div class="flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
-      <div class="flex items-center gap-3 text-slate-800 dark:text-white font-bold text-xl md:text-2xl">
-        <div class="bg-brand-50 dark:bg-brand-900/50 p-2 rounded-full rounded-tr-none">
-          ${icon('leaf', 'w-6 h-6 md:w-8 md:h-8 text-brand-700 dark:text-brand-300 fill-current')}
+  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-30 transition-colors duration-300 pt-16 md:pt-0">
+    <div class="hidden md:flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
+      <div class="flex items-center gap-3">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png" class="w-10 h-10 object-contain drop-shadow-sm" alt="UM">
+        <div class="w-10 h-10 rounded-full bg-brand-100 dark:bg-slate-700 flex items-center justify-center border border-brand-200 dark:border-slate-600 shadow-sm">
+           <i data-lucide="home" class="w-5 h-5 text-brand-600 dark:text-brand-300"></i>
         </div>
-        <span class="leading-tight">Ruang<br>Terhubung</span>
+        <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
+           <span class="text-sm font-bold text-slate-800 dark:text-white leading-tight">Proyek Pengabdian PKn</span>
+           <span class="text-xs text-slate-500 dark:text-slate-400 leading-tight">Kelompok 04</span>
+        </div>
       </div>
     </div>
 
@@ -435,6 +534,9 @@
     }
 
     function viewHome() {
+      const mobHeader = $('#mobile-header');
+      if (mobHeader) mobHeader.style.display = 'flex';
+
       const done = DB.residents.filter(r => r.filled).length;
       return `
   <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-8 rise">
@@ -458,26 +560,31 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        ${DB.residents.map(r => `
+        ${DB.residents.map(r => {
+        const ageText = r.umur ? ` (${r.umur} thn)` : '';
+        return `
         <button data-a="start" data-id="${r.id}" class="btn w-full text-left bg-white dark:bg-[#0f172a] rounded-2xl border ${r.filled ? 'border-brand-400 dark:border-brand-500' : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-slate-500'} p-4 flex items-center gap-4 hover:shadow-md transition-all">
           ${avatar(r.name)}
           <span class="flex-1 min-w-0">
-            <span class="block text-xl font-bold truncate text-slate-800 dark:text-white">${r.name}</span>
+            <span class="block text-xl font-bold truncate text-slate-800 dark:text-white">${r.name}${ageText}</span>
             <span class="block text-sm mt-1 ${r.filled ? 'text-brand-700 dark:text-brand-400 font-medium' : 'text-slate-400 dark:text-slate-500'}">${r.filled ? 'Sudah mengisi (' + (r.time || '') + ')' : 'Belum mengisi'}</span>
           </span>
           ${icon('chevron-right', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
-        </button>`).join('')}
+        </button>`}).join('')}
       </div>
     </section>
   </div>`;
     }
 
     function viewCheckin() {
+      const mobHeader = $('#mobile-header');
+      if (mobHeader) mobHeader.style.display = 'flex';
+
       const r = DB.residents.find(x => x.id == S.rid);
       if (!r) return viewHome();
 
       if (S.step === 1) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="home" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-5xl font-extrabold leading-tight text-slate-800 dark:text-white">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700 dark:text-brand-400">Bagaimana perasaan Anda hari ini?</span></h1>
       <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -491,10 +598,11 @@
     </div>`;
 
       if (S.step === 2) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Apakah Anda memerlukan sesuatu?</h1>
       <p class="text-xl text-slate-500 dark:text-slate-400 mt-2">Bisa pilih lebih dari satu pilihan di bawah.</p>
+      
       <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         ${NEEDS.map(n => {
         const on = S.needs.includes(n.label); return `
@@ -503,6 +611,12 @@
         </button>`;
       }).join('')}
       </div>
+      
+      <div class="mt-5 border-t border-slate-200 dark:border-slate-700 pt-5">
+        <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Lainnya (Opsional)</label>
+        <input id="custom-need" type="text" placeholder="Ketik jika kebutuhan tidak ada di pilihan..." class="w-full border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-lg bg-white dark:bg-[#0f172a] text-slate-800 dark:text-white outline-none focus:border-brand-500 transition-colors shadow-sm">
+      </div>
+
       <button data-a="finish" class="btn mt-10 w-full md:max-w-md mx-auto block min-h-[72px] rounded-2xl bg-brand-700 hover:bg-brand-800 text-white text-2xl font-bold shadow-lg">Kirim Laporan</button>
     </div>`;
 
@@ -516,6 +630,9 @@
     }
 
     function viewWatch() {
+      const mobHeader = $('#mobile-header');
+      if (mobHeader) mobHeader.style.display = 'flex';
+
       const att = DB.residents.filter(r => r.filled && (r.mood === 'sad' || (r.needs && r.needs.length > 0)));
       const pending = DB.residents.filter(r => !r.filled);
 
@@ -539,21 +656,32 @@
     </header>
 
     <section>
+      <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('bar-chart-2', 'w-6 h-6 text-brand-500')} Laporan 7 Hari Terakhir</h2>
+      <div class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-4 md:p-6 shadow-sm h-64 md:h-80">
+        <canvas id="historyChart"></canvas>
+      </div>
+    </section>
+
+    <section>
       <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('bell', 'w-6 h-6 text-amber-500 fill-current')} Perlu Diperhatikan</h2>
       ${att.length ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-5">${att.map(r => {
         const m = moodUI[r.mood] || moodUI['neutral'];
+        const ageText = r.umur ? ` (${r.umur} thn)` : '';
         return `
         <div class="rounded-3xl border-2 p-6 bg-white dark:bg-[#0f172a] shadow-sm flex flex-col" style="border-color:${m.color}">
           <div class="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-5 mb-5">
             ${avatar(r.name)}
             <div class="flex-1 min-w-0">
-              <p class="text-xl font-bold truncate text-slate-800 dark:text-white">${r.name}</p>
+              <p class="text-xl font-bold truncate text-slate-800 dark:text-white">${r.name}${ageText}</p>
               <p class="text-base text-slate-500 dark:text-slate-400">Kamar ${r.room || '-'}</p>
             </div>
             <span class="drop-shadow-sm" style="color:${m.color}">${icon(m.icon, 'w-12 h-12 md:w-14 md:h-14')}</span>
           </div>
-          <p class="text-xl font-bold" style="color:${m.color}">${m.label}</p>
-          ${r.needs && r.needs.length ? `<ul class="mt-4 space-y-3 flex-1">${r.needs.map(n => `<li class="text-lg text-slate-700 dark:text-slate-300 flex items-start gap-2"><span class="mt-1 text-slate-400">▪</span> <span>${n}</span></li>`).join('')}</ul>` : ''}
+          <p class="text-xl font-bold mb-2" style="color:${m.color}">${m.label}</p>
+          ${r.needs && r.needs.length ? `
+            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Kebutuhan:</p>
+            <ul class="space-y-3 flex-1">${r.needs.map(n => `<li class="text-lg text-slate-700 dark:text-slate-300 flex items-start gap-2"><span class="mt-1 text-slate-400">▪</span> <span>${n}</span></li>`).join('')}</ul>
+          ` : ''}
         </div>`;
       }).join('')}</div>`
           : `<div class="bg-white dark:bg-[#0f172a] text-brand-800 dark:text-emerald-400 border border-slate-200 dark:border-emerald-900/50 rounded-2xl p-6 text-xl font-bold shadow-sm flex items-center gap-3">${icon('check-circle', 'w-8 h-8')} Semua lansia dalam keadaan baik hari ini.</div>`}
@@ -561,18 +689,20 @@
 
     <section>
       <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white mb-5 flex items-center gap-2">${icon('hourglass', 'w-6 h-6 text-brand-500')} Belum Mengisi</h2>
-      ${pending.length ? `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${pending.map(r => `
+      ${pending.length ? `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${pending.map(r => {
+            const ageText = r.umur ? ` (${r.umur} thn)` : '';
+            return `
         <div class="w-full bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex items-center gap-4 shadow-sm">
           ${avatar(r.name)}
-          <span class="flex-1 text-xl font-bold text-slate-700 dark:text-slate-200 truncate">${r.name}</span>
+          <span class="flex-1 text-xl font-bold text-slate-700 dark:text-slate-200 truncate">${r.name}${ageText}</span>
           <span class="text-slate-400 dark:text-slate-500 font-medium text-sm border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full">Belum</span>
-        </div>`).join('')}</div>`
+        </div>`}).join('')}</div>`
           : `<div class="text-lg text-slate-500 dark:text-slate-400 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center gap-3">${icon('party-popper', 'w-6 h-6 text-emerald-500')} Semua lansia sudah mengisi form</div>`}
     </section>
 
     <section class="pb-8">
       <div class="mb-5">
-        <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">${icon('calendar-days', 'w-6 h-6 text-brand-500')} Riwayat 7 Hari Terakhir</h2>
+        <h2 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">${icon('calendar-days', 'w-6 h-6 text-brand-500')} Riwayat Lengkap 7 Hari Terakhir</h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">${icon('mouse-pointer-click', 'w-4 h-4')} Klik kotak nama lansia untuk melihat detail hari ini.</p>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -581,7 +711,8 @@
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-slate-600 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
+              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>
+              ${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
@@ -604,6 +735,9 @@
     }
 
     function viewManage() {
+      const mobHeader = $('#mobile-header');
+      if (mobHeader) mobHeader.style.display = 'flex';
+
       return `
   <div class="p-5 md:p-10 max-w-3xl mx-auto space-y-8 rise">
     <header>
@@ -619,6 +753,10 @@
           <input id="a-name" placeholder="Contoh: Oma Ratna" class="w-full border border-slate-200 dark:border-slate-700 focus:border-brand-500 dark:focus:border-brand-400 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 dark:bg-slate-900 dark:text-white focus:bg-white">
         </div>
         <div>
+          <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Umur Lansia (Opsional)</label>
+          <input id="a-age" type="number" placeholder="Contoh: 72" class="w-full border border-slate-200 dark:border-slate-700 focus:border-brand-500 dark:focus:border-brand-400 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 dark:bg-slate-900 dark:text-white focus:bg-white">
+        </div>
+        <div>
           <label class="block text-slate-600 dark:text-slate-400 font-bold mb-2">Kamar (Opsional)</label>
           <input id="a-room" placeholder="Contoh: Melati 03" class="w-full border border-slate-200 dark:border-slate-700 focus:border-brand-500 dark:focus:border-brand-400 rounded-xl p-4 text-lg outline-none transition-colors bg-slate-50 dark:bg-slate-900 dark:text-white focus:bg-white">
         </div>
@@ -630,12 +768,14 @@
     <section class="pt-6">
       <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">Daftar Lansia Terdaftar</h2>
       <div class="space-y-3">
-        ${DB.residents.map(r => `
+        ${DB.residents.map(r => {
+        const ageText = r.umur ? ` (${r.umur} thn)` : '';
+        return `
           <div class="flex items-center justify-between bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
             <div class="flex items-center gap-4">
               ${avatar(r.name)}
               <div>
-                <p class="font-bold text-lg text-slate-800 dark:text-white">${r.name}</p>
+                <p class="font-bold text-lg text-slate-800 dark:text-white">${r.name}${ageText}</p>
                 <p class="text-sm text-slate-500 dark:text-slate-400">${r.room || '-'}</p>
               </div>
             </div>
@@ -648,7 +788,7 @@
               </button>
             </div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
     </section>
   </div>`;
@@ -668,7 +808,6 @@
       nav.style.display = 'block';
       const isActive = (v) => S.view === v;
 
-      // PENGATURAN RUANG MENU: Menyesuaikan agar menu terisi penuh di desktop & mobile
       const activeClass = "bg-[#1e293b] text-white dark:bg-slate-800 md:bg-brand-50 md:dark:bg-[#1e293b] md:text-brand-800 md:dark:text-white font-bold";
       const inactiveClass = "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 md:hover:bg-slate-50 md:dark:hover:bg-slate-800/50 font-semibold";
 
@@ -679,9 +818,17 @@
         </button>`;
 
       const brandHeader = `
-        <div class="hidden md:flex flex-col items-center justify-center gap-3 px-6 pb-6 pt-10 border-b border-slate-100 dark:border-slate-800 text-brand-800 dark:text-white w-full mb-4">
-          <div class="bg-brand-50 dark:bg-brand-900/50 p-3 rounded-2xl">${icon('leaf', 'w-10 h-10 fill-current text-brand-700 dark:text-brand-300')}</div>
-          <span class="text-2xl font-bold text-center leading-tight">Ruang<br>Terhubung</span>
+        <div class="hidden md:flex flex-col items-center justify-center gap-3 px-6 pb-6 pt-10 border-b border-slate-100 dark:border-slate-800 w-full mb-4">
+          <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl w-full justify-center shadow-sm">
+             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png" class="w-8 h-8 object-contain drop-shadow-sm" alt="UM">
+             <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-slate-700 flex items-center justify-center border border-brand-200 dark:border-slate-600 shadow-sm">
+                <i data-lucide="home" class="w-4 h-4 text-brand-600 dark:text-brand-300"></i>
+             </div>
+          </div>
+          <div class="text-center mt-2">
+            <p class="text-[11px] font-bold text-slate-800 dark:text-white">Proyek Pengabdian PKn</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Kelompok 04</p>
+          </div>
         </div>`;
 
       nav.innerHTML = `
@@ -700,6 +847,9 @@
       renderNav();
       updateThemeIcon();
       if (window.lucide) lucide.createIcons();
+      if (S.view === 'watch') {
+        setTimeout(renderChart, 100);
+      }
     }
 
     document.addEventListener('click', e => {
@@ -713,7 +863,7 @@
           S.view = 'checkin'; sessionStorage.setItem('rt_last_view', 'checkin');
           S.step = 1; S.rid = id; S.mood = null; S.needs = [];
           render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
-        case 'back': // Perbaikan tombol back
+        case 'back':
           S.step = 1; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
         case 'mood':
           S.mood = +v; S.step = 2; render(); window.scrollTo(0, 0); $('#app').scrollTo(0, 0); break;
@@ -726,7 +876,7 @@
         case 'delete':
           deleteResident(id); break;
         case 'edit':
-          openEditModal(id); break; // Menjalankan popup modal edit khusus
+          openEditModal(id); break;
       }
     });
 
