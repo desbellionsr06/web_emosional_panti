@@ -132,60 +132,55 @@
         transform: translateY(0) scale(1);
       }
     }
-
-    /* Padding penyesuaian khusus untuk footer mobile */
-    .mobile-footer-padding {
-      padding-bottom: 110px;
-      /* 72px (nav) + 38px (footer) */
-    }
-
-    @media (min-width: 768px) {
-      .mobile-footer-padding {
-        padding-bottom: 0;
-      }
-    }
   </style>
 </head>
 
 <body
   class="font-sans text-slate-900 bg-cream-main dark:bg-[#1e293b] dark:text-slate-100 antialiased md:flex md:h-screen md:overflow-hidden relative transition-colors">
 
-  <!-- Tombol Tema Universal (Pojok Kanan Atas) -->
-  <button onclick="toggleTheme()" id="global-theme-btn"
-    class="fixed top-5 right-5 z-50 p-2.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-full shadow-md text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all">
-    <i data-lucide="moon" id="global-theme-icon" class="w-5 h-5"></i>
-  </button>
+  <!-- Header Global (Khusus Tampilan HP & Desktop, menempel di atas) -->
+  <div id="top-header"
+    class="fixed top-0 left-0 w-full bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 z-50 px-4 py-3 flex items-center justify-between transition-colors">
+    <div class="flex items-center gap-2 md:gap-3">
+      <!-- Logo UM (Diperbaiki agar terbaca jelas) -->
+      <img src="https://upload.wikimedia.org/wikipedia/commons/e/ee/Logo_Universitas_Negeri_Malang.svg"
+        class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="UM">
+      <!-- Ikon & Teks Ruang Terhubung -->
+      <div class="flex items-center gap-2">
+        <div
+          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-50 dark:bg-slate-800 flex items-center justify-center">
+          <i data-lucide="leaf" class="w-4 h-4 md:w-5 md:h-5 text-brand-700 dark:text-brand-400 fill-current"></i>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs md:text-sm font-bold text-slate-800 dark:text-white leading-tight">Ruang</span>
+          <span class="text-xs md:text-sm font-bold text-slate-800 dark:text-white leading-tight">Terhubung</span>
+        </div>
+      </div>
+    </div>
 
-  <!-- Header Global Mobile (Khusus Tampilan HP: Logo UM & Nama Panti) -->
-  <div id="mobile-header"
-    class="md:hidden fixed top-0 left-0 w-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-40 p-3 flex items-center gap-3 transition-all">
-    <div
-      class="flex items-center justify-center w-8 h-8 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded">
-      <i data-lucide="help-circle" class="w-4 h-4 text-brand-700 dark:text-brand-400"></i>
-    </div>
-    <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
-      <span class="text-[11px] font-bold text-slate-800 dark:text-white leading-tight uppercase">PONDOK LANSIA</span>
-      <span class="text-[11px] font-bold text-slate-800 dark:text-white leading-tight uppercase">AL-ISHLAH</span>
-    </div>
+    <!-- Tombol Tema Universal (Dipindah ke dalam header agar tidak melayang bebas) -->
+    <button onclick="toggleTheme()"
+      class="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all">
+      <i data-lucide="moon" id="global-theme-icon" class="w-5 h-5"></i>
+    </button>
   </div>
 
-  <!-- Navigasi -->
+  <!-- Navigasi (Mobile di bawah, Desktop di kiri) -->
   <nav id="bottom-nav"
-    class="fixed bottom-0 left-0 w-full h-[72px] md:static md:w-[280px] md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all flex flex-col justify-between"
-    style="z-index: 40; bottom: 38px;">
+    class="fixed bottom-[38px] left-0 w-full h-[72px] md:static md:w-[280px] md:h-full md:mt-[65px] md:pb-[100px] bg-white dark:bg-[#0f172a] border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-800 z-40 shrink-0 transition-all flex flex-col justify-between">
   </nav>
 
-  <!-- Footer Hak Cipta (Mobile Only) -->
-  <div
-    class="md:hidden fixed bottom-0 left-0 w-full bg-black text-white text-center py-2.5 z-50 flex items-center justify-center gap-2">
-    <span class="text-[11px] font-bold tracking-widest text-slate-300">© 2026 | PROYEK PENGABDIAN PKN · KELOMPOK
-      04</span>
+  <!-- Container Utama Konten (Ruang diperbesar agar tidak terpotong header baru) -->
+  <div id="app"
+    class="w-full pt-[65px] pb-[110px] md:pb-[38px] md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
+    <main id="view" class="h-full"></main>
   </div>
 
-  <!-- Container Utama Konten -->
-  <div id="app"
-    class="w-full pt-[72px] mobile-footer-padding md:pt-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
-    <main id="view" class="h-full"></main>
+  <!-- Footer Hak Cipta (Hitam panjang di bawah) -->
+  <div
+    class="fixed bottom-0 left-0 w-full bg-[#0a0a0a] text-white text-center py-2.5 z-50 flex items-center justify-center">
+    <span class="text-[11px] font-bold tracking-widest text-slate-300">© 2026 | PROYEK PENGABDIAN PKN · KELOMPOK
+      04</span>
   </div>
 
   <!-- Modal & Toast -->
@@ -214,7 +209,6 @@
         document.querySelector('meta[name="theme-color"]').setAttribute("content", "#fafafa");
       }
       updateThemeIcon();
-
       if (S.view === 'watch') renderChart();
     }
 
@@ -508,23 +502,15 @@
     // ==========================================
 
     function viewLanding() {
-      const mobHeader = $('#mobile-header');
-      if (mobHeader) mobHeader.style.display = 'flex';
-
+      // Tombol Navigasi Desktop disembunyikan di Landing Page
       return `
-  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-30 transition-colors duration-300 pt-16 md:pt-0">
-    <div class="hidden md:flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
-      <div class="flex items-center gap-3">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png" class="w-10 h-10 object-contain drop-shadow-sm" alt="UM">
-        <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
-           <span class="text-sm font-bold text-slate-800 dark:text-white leading-tight uppercase">Pondok Lansia</span>
-           <span class="text-xs text-brand-700 dark:text-brand-400 font-bold leading-tight uppercase">Al-Ishlah</span>
-        </div>
-      </div>
-    </div>
-
+  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-30 transition-colors duration-300 pt-16 md:pt-20">
     <div class="flex-1 flex flex-col justify-center px-8 w-full max-w-5xl mx-auto relative rise mt-10 md:mt-0">
       <div class="max-w-[320px] md:max-w-xl z-20">
+        
+        <!-- Judul Panti (Posisi Baru di Halaman Utama Sesuai Permintaan) -->
+        <h3 class="text-sm md:text-lg font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 border-l-4 border-brand-500 pl-3">PONDOK LANSIA AL-ISHLAH</h3>
+        
         <h1 class="text-[48px] md:text-7xl font-extrabold leading-[1.1] text-brand-800 dark:text-white mb-6 tracking-tight">
           Hai,<br>Bagaimana<br>perasaan Anda<br>hari ini?
         </h1>
@@ -546,13 +532,10 @@
     }
 
     function viewHome() {
-      const mobHeader = $('#mobile-header');
-      if (mobHeader) mobHeader.style.display = 'flex';
-
       const done = DB.residents.filter(r => r.filled).length;
       return `
   <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-8 rise">
-    <header>
+    <header class="pt-4 md:pt-8">
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white flex items-center gap-3">Selamat datang!</h1>
       <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Pilih nama Anda untuk mulai check-in hari ini.</p>
     </header>
@@ -589,14 +572,11 @@
     }
 
     function viewCheckin() {
-      const mobHeader = $('#mobile-header');
-      if (mobHeader) mobHeader.style.display = 'flex';
-
       const r = DB.residents.find(x => x.id == S.rid);
       if (!r) return viewHome();
 
       if (S.step === 1) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="nav" data-v="home" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8 md:pt-12"><button data-a="nav" data-v="home" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-5xl font-extrabold leading-tight text-slate-800 dark:text-white">Halo, ${r.name.split(' ')[0]}.<br/><span class="text-brand-700 dark:text-brand-400">Bagaimana perasaan Anda hari ini?</span></h1>
       <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -610,7 +590,7 @@
     </div>`;
 
       if (S.step === 2) return `
-    <div class="max-w-5xl mx-auto px-5 pt-8"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
+    <div class="max-w-5xl mx-auto px-5 pt-8 md:pt-12"><button data-a="back" class="btn bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700 px-5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 flex items-center gap-2 w-max shadow-sm">${icon('arrow-left', 'w-5 h-5')} Kembali</button></div>
     <div class="max-w-5xl mx-auto px-5 mt-8 md:mt-12 rise">
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Apakah Anda memerlukan sesuatu?</h1>
       <p class="text-xl text-slate-500 dark:text-slate-400 mt-2">Bisa pilih lebih dari satu pilihan di bawah.</p>
@@ -642,9 +622,6 @@
     }
 
     function viewWatch() {
-      const mobHeader = $('#mobile-header');
-      if (mobHeader) mobHeader.style.display = 'flex';
-
       const att = DB.residents.filter(r => r.filled && (r.mood === 'sad' || (r.needs && r.needs.length > 0)));
       const pending = DB.residents.filter(r => !r.filled);
 
@@ -662,7 +639,7 @@
 
       return `
   <div class="p-5 md:p-10 max-w-6xl mx-auto space-y-10 rise">
-    <header>
+    <header class="pt-4 md:pt-8">
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Pantauan Pengasuh</h1>
       <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Ringkasan kondisi dan kebutuhan lansia hari ini.</p>
     </header>
@@ -748,12 +725,9 @@
     }
 
     function viewManage() {
-      const mobHeader = $('#mobile-header');
-      if (mobHeader) mobHeader.style.display = 'flex';
-
       return `
   <div class="p-5 md:p-10 max-w-3xl mx-auto space-y-8 rise">
-    <header>
+    <header class="pt-4 md:pt-8">
       <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 dark:text-white">Kelola Lansia</h1>
       <p class="text-lg text-slate-500 dark:text-slate-400 mt-2">Tambahkan, ubah, atau hapus data lansia dari sistem.</p>
     </header>
@@ -830,28 +804,8 @@
           <span class="text-[11px] md:text-lg">${label}</span>
         </button>`;
 
-      const brandHeader = `
-        <div class="hidden md:flex flex-col items-center justify-center gap-3 px-6 pb-6 pt-10 border-b border-slate-100 dark:border-slate-800 w-full mb-4">
-          <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl w-full justify-center shadow-sm">
-             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png" class="w-8 h-8 object-contain drop-shadow-sm" alt="UM">
-             <div class="flex flex-col pl-3 ml-1 border-l border-slate-300 dark:border-slate-600">
-                <span class="text-[11px] font-bold text-slate-800 dark:text-white uppercase leading-tight">Pondok Lansia</span>
-                <span class="text-[11px] font-bold text-brand-700 dark:text-brand-400 uppercase leading-tight">Al-Ishlah</span>
-             </div>
-          </div>
-          <div class="text-center mt-2 flex flex-col items-center">
-            <span class="text-[12px] font-bold text-slate-800 dark:text-white">Proyek Pengabdian PKn</span>
-            <span class="text-[11px] text-slate-500 dark:text-slate-400">Kelompok 04</span>
-          </div>
-          <!-- Nama kelompok di paling bawah sidebar desktop -->
-          <div class="absolute bottom-5 text-center w-full px-6 opacity-60">
-             <p class="text-[10px] font-bold text-slate-400">© 2026 | Kelompok 04</p>
-          </div>
-        </div>`;
-
       nav.innerHTML = `
-        ${brandHeader}
-        <div class="flex flex-row md:flex-col w-full h-full md:h-auto gap-0 md:gap-2 px-0 md:px-4">
+        <div class="flex flex-row md:flex-col w-full h-full md:h-auto gap-0 md:gap-2 px-0 md:px-4 md:pt-6">
           ${item('home', 'house', 'Beranda')}
           ${item('watch', 'clipboard-list', 'Pantauan')}
           ${item('manage', 'users', 'Kelola')}
