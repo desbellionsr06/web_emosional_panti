@@ -7,6 +7,9 @@
   <meta name="theme-color" content="#fafafa" />
   <title>Ruang Terhubung — Check-in Perasaan Lansia</title>
 
+  <!-- PERBAIKAN: Menambahkan favicon logo UM di tab browser -->
+  <link rel="icon" type="image/jpeg" href="./logoum.jpeg" />
+
   <!-- Deteksi Error Anti-Blank Putih -->
   <script>
     window.onerror = function (message, source, lineno, colno, error) {
@@ -720,7 +723,8 @@
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-slate-600 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
+              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>
+              ${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
