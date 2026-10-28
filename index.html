@@ -132,6 +132,18 @@
         transform: translateY(0) scale(1);
       }
     }
+
+    /* Padding penyesuaian khusus untuk footer mobile */
+    .mobile-footer-padding {
+      padding-bottom: 110px;
+      /* 72px (nav) + 38px (footer) */
+    }
+
+    @media (min-width: 768px) {
+      .mobile-footer-padding {
+        padding-bottom: 0;
+      }
+    }
   </style>
 </head>
 
@@ -147,23 +159,32 @@
   <!-- Header Global Mobile (Khusus Tampilan HP: Logo UM & Nama Panti) -->
   <div id="mobile-header"
     class="md:hidden fixed top-0 left-0 w-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-40 p-3 flex items-center gap-3 transition-all">
-    <img
-      src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png"
-      class="w-8 h-8 object-contain drop-shadow-sm" alt="UM">
+    <div
+      class="flex items-center justify-center w-8 h-8 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded">
+      <i data-lucide="help-circle" class="w-4 h-4 text-brand-700 dark:text-brand-400"></i>
+    </div>
     <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
-      <span class="text-sm font-bold text-slate-800 dark:text-white leading-tight uppercase">Pondok Lansia</span>
-      <span class="text-sm font-bold text-brand-700 dark:text-brand-400 leading-tight uppercase">Al-Ishlah</span>
+      <span class="text-[11px] font-bold text-slate-800 dark:text-white leading-tight uppercase">PONDOK LANSIA</span>
+      <span class="text-[11px] font-bold text-slate-800 dark:text-white leading-tight uppercase">AL-ISHLAH</span>
     </div>
   </div>
 
   <!-- Navigasi -->
   <nav id="bottom-nav"
-    class="fixed bottom-0 left-0 w-full h-[72px] md:static md:w-[280px] md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all flex flex-col justify-between">
+    class="fixed bottom-0 left-0 w-full h-[72px] md:static md:w-[280px] md:h-full bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 md:border-t-0 md:border-r shadow-[0_-4px_10px_rgba(0,0,0,0.03)] md:shadow-none z-40 shrink-0 transition-all flex flex-col justify-between"
+    style="z-index: 40; bottom: 38px;">
   </nav>
+
+  <!-- Footer Hak Cipta (Mobile Only) -->
+  <div
+    class="md:hidden fixed bottom-0 left-0 w-full bg-black text-white text-center py-2.5 z-50 flex items-center justify-center gap-2">
+    <span class="text-[11px] font-bold tracking-widest text-slate-300">© 2026 | PROYEK PENGABDIAN PKN · KELOMPOK
+      04</span>
+  </div>
 
   <!-- Container Utama Konten -->
   <div id="app"
-    class="w-full pb-[90px] pt-[72px] md:pt-0 md:pb-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
+    class="w-full pt-[72px] mobile-footer-padding md:pt-0 md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
     <main id="view" class="h-full"></main>
   </div>
 
@@ -194,7 +215,6 @@
       }
       updateThemeIcon();
 
-      // Update warna Chart jika sedang berada di halaman Pantauan
       if (S.view === 'watch') renderChart();
     }
 
@@ -371,7 +391,6 @@
       if (!r.filled) { updatedHistory.shift(); updatedHistory.push(moodName); }
       else { updatedHistory[6] = moodName; }
 
-      // Menangkap Input Kebutuhan Kustom (Lainnya)
       const customInput = document.getElementById('custom-need');
       if (customInput && customInput.value.trim() !== '') {
         S.needs.push(customInput.value.trim());
@@ -411,7 +430,7 @@
 
       if (!newName) return toast('Nama lansia tidak boleh kosong.', true);
 
-      closeDetail(); // Tutup modal setelah klik simpan
+      closeDetail();
       const { error } = await supabaseClient.from('residents').update({ name: newName, room: newRoom, umur: newAge }).eq('id', id);
 
       if (error) return toast("Gagal memperbarui data. (Pastikan kolom 'umur' ada di DB)", true, 6000);
@@ -465,9 +484,9 @@
         data: {
           labels: last7Days,
           datasets: [
-            { label: 'Senang', data: dataSenang, backgroundColor: '#a7f3d0', borderRadius: 4 }, // Hijau Pucat
-            { label: 'Biasa saja', data: dataBiasa, backgroundColor: '#fde68a', borderRadius: 4 }, // Kuning Pucat
-            { label: 'Sedih', data: dataSedih, backgroundColor: '#fecaca', borderRadius: 4 } // Merah Muda
+            { label: 'Senang', data: dataSenang, backgroundColor: '#a7f3d0', borderRadius: 4 },
+            { label: 'Biasa saja', data: dataBiasa, backgroundColor: '#fde68a', borderRadius: 4 },
+            { label: 'Sedih', data: dataSedih, backgroundColor: '#fecaca', borderRadius: 4 }
           ]
         },
         options: {
@@ -495,6 +514,13 @@
       return `
   <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-30 transition-colors duration-300 pt-16 md:pt-0">
     <div class="hidden md:flex justify-between items-center p-6 w-full max-w-5xl mx-auto z-10">
+      <div class="flex items-center gap-3">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png" class="w-10 h-10 object-contain drop-shadow-sm" alt="UM">
+        <div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
+           <span class="text-sm font-bold text-slate-800 dark:text-white leading-tight uppercase">Pondok Lansia</span>
+           <span class="text-xs text-brand-700 dark:text-brand-400 font-bold leading-tight uppercase">Al-Ishlah</span>
+        </div>
+      </div>
     </div>
 
     <div class="flex-1 flex flex-col justify-center px-8 w-full max-w-5xl mx-auto relative rise mt-10 md:mt-0">
@@ -511,16 +537,10 @@
       </div>
     </div>
 
-    <div class="p-6 md:p-10 w-full max-w-5xl mx-auto pb-12 z-20">
+    <div class="p-6 md:p-10 w-full max-w-5xl mx-auto pb-12 z-20 mb-8 md:mb-0">
       <button data-a="nav" data-v="home" class="w-full bg-brand-700 hover:bg-brand-800 dark:bg-brand-600 dark:hover:bg-brand-500 text-white rounded-full py-5 md:py-6 text-xl md:text-2xl font-bold flex justify-center items-center gap-3 shadow-[0_10px_30px_rgba(47,72,60,0.3)] hover:shadow-[0_15px_40px_rgba(47,72,60,0.4)] rise transition-all">
         Mulai Cek Emosi ${icon('arrow-right', 'w-7 h-7 md:w-8 md:h-8')}
       </button>
-      
-      <!-- Tulisan Proyek Pengabdian untuk Tampilan Mobile (Diletakkan di bawah tombol) -->
-      <div class="md:hidden mt-6 text-center w-full">
-         <p class="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Proyek Pengabdian PKn</p>
-         <p class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Kelompok 04</p>
-      </div>
     </div>
   </div>`;
     }
@@ -696,8 +716,7 @@
             return `
           <button onclick="openDetail(${r.id})" class="text-left w-full bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-slate-600 transition-all focus:outline-none">
             <div class="flex justify-between items-center mb-5">
-              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>
-              ${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
+              <p class="text-xl font-bold text-slate-800 dark:text-white truncate pr-2">${r.name}</p>${icon('zoom-in', 'w-5 h-5 text-slate-300 dark:text-slate-600')}
             </div>
             <div class="grid grid-cols-7 gap-1 md:gap-2 text-center">
               ${hist.map((moodStr, i) => {
@@ -815,8 +834,9 @@
         <div class="hidden md:flex flex-col items-center justify-center gap-3 px-6 pb-6 pt-10 border-b border-slate-100 dark:border-slate-800 w-full mb-4">
           <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl w-full justify-center shadow-sm">
              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_Universitas_Negeri_Malang.svg/1200px-Logo_Universitas_Negeri_Malang.svg.png" class="w-8 h-8 object-contain drop-shadow-sm" alt="UM">
-             <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-slate-700 flex items-center justify-center border border-brand-200 dark:border-slate-600 shadow-sm">
-                <i data-lucide="home" class="w-4 h-4 text-brand-600 dark:text-brand-300"></i>
+             <div class="flex flex-col pl-3 ml-1 border-l border-slate-300 dark:border-slate-600">
+                <span class="text-[11px] font-bold text-slate-800 dark:text-white uppercase leading-tight">Pondok Lansia</span>
+                <span class="text-[11px] font-bold text-brand-700 dark:text-brand-400 uppercase leading-tight">Al-Ishlah</span>
              </div>
           </div>
           <div class="text-center mt-2 flex flex-col items-center">
