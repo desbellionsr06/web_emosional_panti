@@ -133,6 +133,7 @@
       }
     }
 
+    /* Padding penyesuaian khusus untuk footer */
     .footer-padding {
       padding-bottom: 110px;
     }
@@ -143,14 +144,12 @@
       }
     }
 
-    /* PERBAIKAN: Menghilangkan background putih pada JPEG logo UM */
+    /* Menghilangkan background putih pada JPEG logo UM */
     .logo-transparent {
       mix-blend-mode: multiply;
     }
 
     .dark .logo-transparent {
-      /* Di mode gelap, multiply akan membuat gambar hilang, jadi kita membalik warnanya agar putihnya hilang (jika logo monokrom) 
-         Jika logonya berwarna, teknik filter contrast dan brightness sangat membantu menyamarkan putih */
       mix-blend-mode: screen;
       filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.2));
     }
@@ -160,51 +159,42 @@
 <body
   class="font-sans text-slate-900 bg-cream-main dark:bg-[#1e293b] dark:text-slate-100 antialiased md:flex md:h-screen md:overflow-hidden relative transition-colors">
 
-  <!-- Header Global (Khusus Tampilan HP & Desktop, menempel di atas) -->
+  <!-- Header Global (HP & Desktop) -->
   <div id="top-header"
     class="fixed top-0 left-0 w-full bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 z-50 px-4 py-3 flex items-center justify-between transition-colors">
-    <div class="flex items-center gap-3">
-      <!-- PERBAIKAN: Logo UM dengan class transparansi -->
-      <div class="bg-transparent overflow-hidden rounded-full flex items-center justify-center">
+
+    <div class="flex items-center gap-2 md:gap-4">
+      <!-- Logo UM -->
+      <div class="bg-transparent overflow-hidden rounded-full flex items-center justify-center shrink-0">
         <img src="./logoum.jpeg" class="w-8 h-8 md:w-10 md:h-10 object-contain logo-transparent" alt="UM">
       </div>
 
-      <!-- Logo & Nama Aplikasi -->
-      <div class="flex items-center gap-2">
+      <!-- Ikon Daun & Nama Panti -->
+      <div class="flex items-center gap-2 md:gap-3">
         <div
-          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-50 dark:bg-slate-800 flex items-center justify-center">
+          class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
           <i data-lucide="leaf" class="w-4 h-4 md:w-5 md:h-5 text-brand-700 dark:text-brand-400 fill-current"></i>
         </div>
+
+        <!-- Garis pembatas -->
+        <div class="h-6 md:h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+        <!-- Teks Nama Panti -->
         <div class="flex flex-col">
           <span
-            class="text-[10px] md:text-xs font-bold text-slate-800 dark:text-white leading-tight uppercase">Ruang</span>
+            class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">PONDOK
+            LANSIA</span>
           <span
-            class="text-[10px] md:text-xs font-bold text-slate-800 dark:text-white leading-tight uppercase">Terhubung</span>
+            class="text-[10px] md:text-xs font-extrabold text-brand-700 dark:text-brand-400 uppercase tracking-widest leading-tight">AL-ISHLAH</span>
         </div>
-      </div>
-
-      <!-- PERBAIKAN: Nama Panti (Kini tampil di header versi Desktop juga) -->
-      <div class="hidden md:flex flex-col border-l border-slate-200 dark:border-slate-700 pl-3 ml-2">
-        <span
-          class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">PONDOK
-          LANSIA</span>
-        <span
-          class="text-[10px] md:text-xs font-bold text-brand-700 dark:text-brand-400 uppercase tracking-widest leading-tight">AL-ISHLAH</span>
       </div>
     </div>
 
     <!-- Tombol Tema Universal -->
     <button onclick="toggleTheme()"
-      class="p-2 md:p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all">
+      class="p-2 md:p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all shrink-0">
       <i data-lucide="moon" id="global-theme-icon" class="w-4 h-4 md:w-5 h-5"></i>
     </button>
-  </div>
-
-  <!-- Nama Panti Mobile (Tambahan di bawah header khusus Mobile) -->
-  <div
-    class="md:hidden fixed top-[56px] left-0 w-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/50 z-40 py-1.5 text-center">
-    <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PONDOK LANSIA
-      AL-ISHLAH</span>
   </div>
 
   <!-- Navigasi (Mobile di bawah, Desktop di kiri) -->
@@ -213,12 +203,11 @@
   </nav>
 
   <!-- Container Utama Konten -->
-  <div id="app"
-    class="w-full pt-[85px] md:pt-[65px] footer-padding md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
+  <div id="app" class="w-full pt-[65px] footer-padding md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
     <main id="view" class="h-full"></main>
   </div>
 
-  <!-- Footer Hak Cipta Universal (Hitam panjang di bawah, berlaku untuk HP & Desktop) -->
+  <!-- Footer Hak Cipta Universal (Berlaku untuk HP & Desktop) -->
   <div
     class="fixed bottom-0 left-0 w-full h-[38px] bg-[#0a0a0a] text-white text-center flex items-center justify-center md:justify-start md:px-10 z-50">
     <span class="text-[10px] md:text-[11px] font-bold tracking-widest text-slate-300">© 2026 | PROYEK PENGABDIAN PKN ·
@@ -299,7 +288,7 @@
 
     function toast(msg, isError = false, duration = 4000) {
       const el = document.createElement('div');
-      el.className = `fixed top-10 md:top-6 left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-800'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
+      el.className = `fixed top-10 md:top-[80px] left-0 right-0 mx-auto w-max max-w-[90vw] md:left-auto md:right-6 md:mx-0 z-[100] rise ${isError ? 'bg-red-700' : 'bg-slate-800'} text-white font-bold px-6 py-4 rounded-2xl shadow-2xl text-center min-w-[280px]`;
       el.textContent = msg;
       $('#toast-root').appendChild(el);
       setTimeout(() => el.remove(), duration);
