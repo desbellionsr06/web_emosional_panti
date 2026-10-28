@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#fafafa" />
-  <title>RuangTerhubung — Check-in Perasaan Lansia</title>
+  <title>Ruang Terhubung — Check-in Emosional Lansia</title>
 
   <!-- Deteksi Error Anti-Blank Putih -->
   <script>
@@ -132,6 +132,20 @@
         transform: translateY(0) scale(1);
       }
     }
+
+    /* Padding penyesuaian khusus untuk footer */
+    .footer-padding {
+      padding-bottom: 110px;
+      /* Mobile: 72px (nav) + 38px (footer) */
+    }
+
+    @media (min-width: 768px) {
+      .footer-padding {
+        padding-bottom: 38px;
+      }
+
+      /* Desktop: hanya untuk footer 38px */
+    }
   </style>
 </head>
 
@@ -142,9 +156,8 @@
   <div id="top-header"
     class="fixed top-0 left-0 w-full bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 z-50 px-4 py-3 flex items-center justify-between transition-colors">
     <div class="flex items-center gap-2 md:gap-3">
-      <!-- Logo UM (Diperbaiki agar terbaca jelas) -->
-      <img src="https://upload.wikimedia.org/wikipedia/commons/e/ee/Logo_Universitas_Negeri_Malang.svg"
-        class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="UM">
+      <!-- Logo UM -->
+      <img src="./logoum.jpeg" class="w-10 h-10 object-contain drop-shadow-sm" alt="UM">
       <!-- Ikon & Teks Ruang Terhubung -->
       <div class="flex items-center gap-2">
         <div
@@ -158,7 +171,7 @@
       </div>
     </div>
 
-    <!-- Tombol Tema Universal (Dipindah ke dalam header agar tidak melayang bebas) -->
+    <!-- Tombol Tema Universal -->
     <button onclick="toggleTheme()"
       class="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-300 transition-all">
       <i data-lucide="moon" id="global-theme-icon" class="w-5 h-5"></i>
@@ -167,18 +180,17 @@
 
   <!-- Navigasi (Mobile di bawah, Desktop di kiri) -->
   <nav id="bottom-nav"
-    class="fixed bottom-[38px] left-0 w-full h-[72px] md:static md:w-[280px] md:h-full md:mt-[65px] md:pb-[100px] bg-white dark:bg-[#0f172a] border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-800 z-40 shrink-0 transition-all flex flex-col justify-between">
+    class="fixed bottom-[38px] left-0 w-full h-[72px] md:static md:w-[280px] md:h-full md:mt-[65px] md:pb-[38px] bg-white dark:bg-[#0f172a] border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-800 z-40 shrink-0 transition-all flex flex-col justify-between">
   </nav>
 
-  <!-- Container Utama Konten (Ruang diperbesar agar tidak terpotong header baru) -->
-  <div id="app"
-    class="w-full pt-[65px] pb-[110px] md:pb-[38px] md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
+  <!-- Container Utama Konten (Ruang diperbesar agar tidak terpotong header dan footer) -->
+  <div id="app" class="w-full pt-[65px] footer-padding md:flex-1 md:h-full md:overflow-y-auto no-scrollbar relative">
     <main id="view" class="h-full"></main>
   </div>
 
-  <!-- Footer Hak Cipta (Hitam panjang di bawah) -->
+  <!-- Footer Hak Cipta Universal (Hitam panjang di bawah, berlaku untuk HP & Desktop) -->
   <div
-    class="fixed bottom-0 left-0 w-full bg-[#0a0a0a] text-white text-center py-2.5 z-50 flex items-center justify-center">
+    class="fixed bottom-0 left-0 w-full h-[38px] bg-[#0a0a0a] text-white text-center flex items-center justify-center md:justify-start md:px-10 z-50">
     <span class="text-[11px] font-bold tracking-widest text-slate-300">© 2026 | PROYEK PENGABDIAN PKN · KELOMPOK
       04</span>
   </div>
@@ -502,13 +514,12 @@
     // ==========================================
 
     function viewLanding() {
-      // Tombol Navigasi Desktop disembunyikan di Landing Page
       return `
-  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-30 transition-colors duration-300 pt-16 md:pt-20">
+  <div class="fixed inset-0 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-y-auto no-scrollbar z-30 transition-colors duration-300 pt-16 md:pt-0">
     <div class="flex-1 flex flex-col justify-center px-8 w-full max-w-5xl mx-auto relative rise mt-10 md:mt-0">
       <div class="max-w-[320px] md:max-w-xl z-20">
         
-        <!-- Judul Panti (Posisi Baru di Halaman Utama Sesuai Permintaan) -->
+        <!-- Judul Panti -->
         <h3 class="text-sm md:text-lg font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 border-l-4 border-brand-500 pl-3">PONDOK LANSIA AL-ISHLAH</h3>
         
         <h1 class="text-[48px] md:text-7xl font-extrabold leading-[1.1] text-brand-800 dark:text-white mb-6 tracking-tight">
@@ -634,7 +645,7 @@
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
-        return d.toLocaleDateString('id-ID', { weekday: 'short' }).slice(0, 3);
+        return d.toLocaleDateString('id-ID', { weekday: 'short' });
       });
 
       return `
